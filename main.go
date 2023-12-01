@@ -1,24 +1,23 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/maatko/spotisong/database"
 	"github.com/maatko/spotisong/models"
-	"github.com/maatko/spotisong/routes"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Callback func(db *sql.DB)
+type Callback func()
 var Callbacks = map[string] Callback {
 	"run": Run,
 	"migrate": Migrate,
+	"test": Test,
 }
 
 func main() {
@@ -27,26 +26,8 @@ func main() {
 		log.Fatal("Please choose an action: [run, migrate]")
 	}
 
-	callback := Callbacks[strings.ToLower(args[0])]
-	if callback == nil {
-		log.Fatal("Please choose an action: [run, migrate]")
-	}
+	database.Initialize("db.sqlite3")
 
-	database, err := sql.Open("sqlite3", "db.sqlite3")
-	if err != nil {
-		log.Fatal("Failed to open connection to the database")
-	}
-
-	// make sure to update the database 
-	// for the models
-	models.DataBase = database
-
-	/////////////////////////
-	// Routes
-	/////////////////////////
-
-	// TODO :: implement routes
-	
 	/////////////////////////
 	// Models
 	/////////////////////////
@@ -57,8 +38,14 @@ func main() {
 	})
 
 	/////////////////////////
-
-	callback(database)
+	// Processing
+	/////////////////////////
+	
+	if callback, ok := Callbacks[strings.ToLower(args[0])]; ok {
+		callback()
+	} else {
+		log.Fatal("Please choose an action: [run, migrate]")
+	}
 
 	database.Close()
 }
@@ -69,72 +56,58 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.User {
 		Username: "admin",
 		Password: "password",
-	}.Fetch()
+	}.Create()
 
 	log.Printf("ID: %v, Username: %v, Password: %v\n", user.ID, user.Username, user.Password)
 }
 
-func Run(database *sql.DB) {
+func Test() {
+	rows, err := database.GetTableInformation("user")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, information := range rows {
+		log.Println("======")
+		log.Printf("ID: %v\n", information.ID)
+		log.Printf("Name: %v\n", information.Name)
+		log.Printf("Type: %v\n", information.Type)
+		log.Printf("NonNull: %v\n", information.NonNull)
+		log.Printf("Default Value String: %v\n", information.DefaultValue.String)
+		log.Printf("Default Value Valid: %v\n", information.DefaultValue.Valid)
+		log.Printf("PrimaryKey: %v\n", information.PrimaryKey)
+	}
+}
+
+
+func Run() {
 	log.Println("Starting HTTP server at port '8000'")
 
 	router := mux.NewRouter()
 
     router.HandleFunc("/", MainHandler)
-    router.HandleFunc("/login/", routes.LoginHandler)
-    router.HandleFunc("/register/", routes.RegisterHandler)
 
 	http.Handle("/", router)
 	
 	http.ListenAndServe(":8000", nil)
 }
 
-func Migrate(database *sql.DB) {
+func Migrate() {
 	for _, model := range models.Models {
-		var existingFields [] models.ModelField
-
-		rows, err := database.Query(fmt.Sprintf("PRAGMA table_info(%v)", model.Table))
+		columns, err := database.GetTableInformation(model.Table)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer rows.Close()
 
-		for rows.Next() {
-			var cid int
-			var name string
-			var dataType string
-			var notNull int
-			var defaultValue sql.NullString
-			var primaryKey int
-	
-			err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &primaryKey)
-			if err != nil {
-				log.Fatal(err)
-			}
-			
-			existingFields = append(existingFields, models.ModelField {
-				Name: name,
-				Type: dataType,
-				Properties: "",
-			})
-		}
-
-		if err := rows.Err(); err != nil {
-			log.Fatal(err)
-		}
-
-		if len(model.Fields) != len(existingFields) {
-			database.Exec(model.GenerateMigrationSQL())
-
-			log.Printf("Migrating the '%v' table...\n", model.Table)
+		if len(model.Fields) != len(columns) {
+			model.Migrate()
 			return
 		}
 
 		for index, field := range model.Fields {
-			existingField := existingFields[index]
+			existingField := columns[index]
 			if field.Name != existingField.Name || field.Type != existingField.Type {
-				database.Exec(model.GenerateMigrationSQL())
-	
-				log.Printf("Migrating the '%v' table...\n", model.Table)
+				model.Migrate()
 				return
 			}
 		}

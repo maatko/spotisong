@@ -6,6 +6,8 @@ import (
 	"log"
 	"reflect"
 	"strings"
+
+	"github.com/maatko/spotisong/database"
 )
 
 type ModelField struct {
@@ -20,9 +22,8 @@ type Model struct {
 }
 
 var Models map[string] Model = make(map [string] Model)
-var DataBase *sql.DB
 
-func (model Model) GenerateMigrationSQL() string {
+func (model Model) Migrate() {
 	var builder strings.Builder
 
 	// first the whole table has to be dropped
@@ -32,7 +33,9 @@ func (model Model) GenerateMigrationSQL() string {
 	builder.WriteString(model.Table)
 
 	if len(model.Fields) == 0 {
-		return builder.String()
+		log.Printf("Migrating the '%v' table...\n", model.Table)
+		database.Instance.Exec(builder.String())
+		return
 	}
 
 	builder.WriteString(" (")
@@ -47,7 +50,9 @@ func (model Model) GenerateMigrationSQL() string {
 		}
 	}
 	builder.WriteString(")")
-	return builder.String()
+	
+	log.Printf("Migrating the '%v' table...\n", model.Table)
+	database.Instance.Exec(builder.String())
 }
 
 func Fetch(definition any) *sql.Rows {
@@ -98,7 +103,7 @@ func Fetch(definition any) *sql.Rows {
 		appended = true
 	}
 
-	rows, err := DataBase.Query(query.String())
+	rows, err := database.Instance.Query(query.String())
 	if err != nil {
 		log.Fatal("Failed to query the database")
 	}
@@ -157,7 +162,7 @@ func Insert(definition any) int {
 	}
 	query.WriteString(")")
 
-	result, err := DataBase.Exec(query.String())
+	result, err := database.Instance.Exec(query.String())
 	if err != nil {
 		log.Fatal("Failed to insert into the database")
 	}
