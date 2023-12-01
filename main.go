@@ -59,7 +59,11 @@ func main() {
 func MainHandler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusOK)
 
-	user := models.CreateUser("admin", "password")
+	user := models.User {
+		Username: "admin",
+		Password: "password",
+	}.Create()
+
 	log.Printf("ID: %v, Username: %v, Password: %v\n", user.ID, user.Username, user.Password)
 }
 
