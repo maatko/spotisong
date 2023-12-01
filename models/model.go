@@ -50,6 +50,62 @@ func (model Model) GenerateMigrationSQL() string {
 	return builder.String()
 }
 
+func Fetch(definition any) *sql.Rows {
+	definitionType := reflect.TypeOf(definition)
+	definitionValue := reflect.ValueOf(definition)
+
+	model, ok := Models[definitionType.Name()]
+	if !ok {
+		log.Fatal("Provided definition does not have a registered model [fetch]")
+	}
+
+	numberOfFields := definitionType.NumField()
+	if numberOfFields != len(model.Fields) {
+		log.Fatal("Provided definition does not match the registered model [field count]")
+	}
+
+	var query strings.Builder
+
+	query.WriteString(fmt.Sprintf("SELECT * FROM %v", model.Table))
+
+	appended := false
+	for i := 0; i < numberOfFields; i++ {
+		fieldType := definitionType.Field(i)
+		fieldValue := definitionValue.Field(i)
+		modelField := model.Fields[i]
+
+		if strings.ToLower(fieldType.Name) != modelField.Name {
+			log.Fatal("Provided definition does not match the registered model [field name]")
+		}
+
+		value := fieldValue.Interface()
+		if fieldType.Type.Kind() == reflect.String {
+			if len(fieldValue.String()) == 0 {
+				continue
+			}
+		} else {
+			if fieldValue.Int() == -1 {
+				continue
+			}
+		}
+
+		if appended {
+			query.WriteString(fmt.Sprintf(" AND %v='%v'", modelField.Name, value))
+		} else {
+			query.WriteString(fmt.Sprintf(" WHERE %v='%v'", modelField.Name, value))
+		}
+
+		appended = true
+	}
+
+	rows, err := DataBase.Query(query.String())
+	if err != nil {
+		log.Fatal("Failed to query the database")
+	}
+
+	return rows
+}
+
 func Insert(definition any) int {
 	definitionType := reflect.TypeOf(definition)
 	definitionValue := reflect.ValueOf(definition)

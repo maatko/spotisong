@@ -60,9 +60,8 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusOK)
 
 	user := models.User {
-		Username: "admin",
-		Password: "password",
-	}.Create()
+		ID: 1,
+	}.Fetch()
 
 	log.Printf("ID: %v, Username: %v, Password: %v\n", user.ID, user.Username, user.Password)
 }
