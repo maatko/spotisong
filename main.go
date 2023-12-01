@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/maatko/spotisong/models"
+	"github.com/maatko/spotisong/routes"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,6 +42,12 @@ func main() {
 	models.DataBase = database
 
 	/////////////////////////
+	// Routes
+	/////////////////////////
+
+	// TODO :: implement routes
+	
+	/////////////////////////
 	// Models
 	/////////////////////////
 
@@ -71,9 +78,13 @@ func Run(database *sql.DB) {
 	log.Println("Starting HTTP server at port '8000'")
 
 	router := mux.NewRouter()
+
     router.HandleFunc("/", MainHandler)
+    router.HandleFunc("/login/", routes.LoginHandler)
+    router.HandleFunc("/register/", routes.RegisterHandler)
 
 	http.Handle("/", router)
+	
 	http.ListenAndServe(":8000", nil)
 }
 
