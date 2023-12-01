@@ -3,11 +3,13 @@ package main
 import (
 	"database/sql"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
-	"github.com/maatko/spotisong/migrations"
 	"github.com/maatko/spotisong/models"
+
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -37,16 +39,28 @@ func main() {
 	callback(database)
 }
 
+func ArticlesCategoryHandler(w http.ResponseWriter, r *http.Request) {
+    // vars := mux.Vars(r)
+    w.WriteHeader(http.StatusOK)
+}
+
 func Run(database *sql.DB) {
+	log.Println("Starting HTTP server at port '8000'")
+
+	router := mux.NewRouter()
+    router.HandleFunc("/", ArticlesCategoryHandler)
+
+	http.Handle("/", router)
+	http.ListenAndServe(":8000", nil)
 }
 
 func Migrate(database *sql.DB) {
 	// create all the migrations here
-	migrations.Create("user", models.User {
+	CreateMigration("user", models.User {
 		Email: "1024",
 		Password: "512",
 	})
 
 	// run all the migrations here
-	migrations.Migrate(database)
+	RunMigrations(database)
 }

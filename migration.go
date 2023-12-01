@@ -1,4 +1,4 @@
-package migrations
+package main
 
 import (
 	"database/sql"
@@ -23,7 +23,7 @@ type Migration struct {
 // so the can later be accessed
 var Migrations map[string] Migration = make(map [string] Migration)
 
-func Create(table string, model any) {
+func CreateMigration(table string, model any) {
 	modelType := reflect.TypeOf(model)
 	modelValue := reflect.ValueOf(model)
 
@@ -59,7 +59,7 @@ func Create(table string, model any) {
 	}
 }
 
-func Migrate(database *sql.DB) {
+func RunMigrations(database *sql.DB) {
 	for table, migration := range Migrations {
 		var existingColumns [] MigrationColumn
 
