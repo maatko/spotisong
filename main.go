@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +18,6 @@ type Callback func()
 var Callbacks = map[string] Callback {
 	"run": Run,
 	"migrate": Migrate,
-	"test": Test,
 }
 
 func main() {
@@ -56,40 +56,18 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.User {
 		Username: "admin",
 		Password: "password",
-	}.Create()
+	}.Fetch()
 
-	log.Printf("ID: %v, Username: %v, Password: %v\n", user.ID, user.Username, user.Password)
+	w.Write([]byte(fmt.Sprintf("ID: %v, Username: %v, Password: %v", user.ID, user.Username, user.Password)))
 }
-
-func Test() {
-	rows, err := database.GetTableInformation("user")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, information := range rows {
-		log.Println("======")
-		log.Printf("ID: %v\n", information.ID)
-		log.Printf("Name: %v\n", information.Name)
-		log.Printf("Type: %v\n", information.Type)
-		log.Printf("NonNull: %v\n", information.NonNull)
-		log.Printf("Default Value String: %v\n", information.DefaultValue.String)
-		log.Printf("Default Value Valid: %v\n", information.DefaultValue.Valid)
-		log.Printf("PrimaryKey: %v\n", information.PrimaryKey)
-	}
-}
-
 
 func Run() {
 	log.Println("Starting HTTP server at port '8000'")
 
 	router := mux.NewRouter()
+	router.HandleFunc("/", MainHandler)
 
-    router.HandleFunc("/", MainHandler)
-
-	http.Handle("/", router)
-	
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":8000", router)
 }
 
 func Migrate() {
