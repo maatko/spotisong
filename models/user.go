@@ -2,16 +2,19 @@ package models
 
 type User struct {
 	ID int `properties:"PRIMARY KEY AUTOINCREMENT"`
-	Email string
+	Username string
 	Password string
 }
 
-func Create(username string, password string) User {
+func CreateUser(username string, password string) User {
 	user := User {
-		ID: 0,
+		Username: username,
 		Password: password,
 	}
 
-	Insert(user)
+	// update the id with the inserted 
+	// users id
+	user.ID = Insert(user)
+
 	return user
 }
