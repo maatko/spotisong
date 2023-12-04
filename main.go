@@ -11,6 +11,7 @@ import (
 	"github.com/maatko/spotisong/models"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -18,12 +19,18 @@ type Callback func()
 var Callbacks = map[string] Callback {
 	"run": Run,
 	"migrate": Migrate,
+	"test": Test,
 }
 
 func main() {
 	args := os.Args[1:]
 	if len(args) < 1 {
 		log.Fatal("Please choose an action: [run, migrate]")
+	}
+
+	err := godotenv.Load()
+	if err != nil {
+	  log.Fatal("Error loading .env file")
 	}
 
 	database.Initialize("db.sqlite3")
@@ -61,13 +68,44 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("ID: %v, Username: %v, Password: %v", user.ID, user.Username, user.Password)))
 }
 
+func Test() {
+	rows, err := database.Select("user", "*", models.User {
+		ID: 1,
+		Username: "admin",
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var id int
+	var username string
+	var password string
+
+	for rows.Next() {
+		err = rows.Scan(&id, &username, &password)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("ID:", id)
+		log.Println("Username:", username)
+		log.Println("Password:", password)
+	}
+}
+
 func Run() {
-	log.Println("Starting HTTP server at port '8000'")
+	ip := os.Getenv("SERVER_IP")
+	port := os.Getenv("SERVER_PORT")
+	address := fmt.Sprintf("%v:%v", ip, port)
+
+	log.Printf("Starting HTTP server at '%v'\n", address)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", MainHandler)
 
-	http.ListenAndServe(":8000", router)
+	http.ListenAndServe(address, router)
 }
 
 func Migrate() {
