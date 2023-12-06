@@ -13,6 +13,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type Callback func()
+var Callbacks = map[string] Callback {
+	"run": Run,
+	"makemigrations": MakeMigrations,
+	"migrate": Migrate,
+}
+
 func main() {
 	args := os.Args[1:]
 	if len(args) < 1 {
@@ -44,54 +51,65 @@ func main() {
 	app.OnModelRegister()
 	app.OnRouteRegister()
 
-	action := strings.ToLower(args[0])
-	if action == "run" {
-		fmt.Printf("HTTP server started on '%v:%v'...\n", api.Instance.Address, api.Instance.Port)
-		http.ListenAndServe(fmt.Sprintf(
-			"%v:%v",
-			api.Instance.Address,
-			api.Instance.Port,
-		), nil)
-	} else if action == "migrate" {
-		files, err := os.ReadDir("./app/migrations")
+	if callback, ok := Callbacks[strings.ToLower(args[0])]; ok {
+		callback()
+	} else {
+		log.Fatal("Please choose an action: [run, makemigrations, migrate]")
+	}
+}
+
+func Run() {
+	fmt.Printf("HTTP server started on '%v:%v'...\n", api.Instance.Address, api.Instance.Port)
+	http.ListenAndServe(fmt.Sprintf(
+		"%v:%v",
+		api.Instance.Address,
+		api.Instance.Port,
+	), nil)
+}
+
+func MakeMigrations() {
+	for _, model := range api.ModelRegistry {
+		api.CreateMigration(&model)
+	}
+
+	for _, migration := range api.MigrationRegistry {
+		file, err := os.Create(fmt.Sprintf("%v/%v-%v.sql", "./app/migrations", migration.Index, migration.Table))
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(migration.Query)
 		if err != nil {
 			panic(err)
 		}
 
-		for _, file := range files {
-			bytes, err := os.ReadFile(fmt.Sprintf("%s/%s", "./app/migrations", file.Name()))
-			if err != nil {
-				panic(err)
-			}
-
-			_, err = api.Instance.DataBase.Exec(string(bytes))
-			if err != nil {
-				panic(err)
-			}
+		// TODO :: in the future make this so it
+		// doesn't drop the whole table but detect
+		// the changes in the migration and if needed
+		// it drops the table
+		err = migration.Drop()
+		if err != nil {
+			panic(err)
 		}
-	} else if action == "makemigrations" {
-		for _, model := range api.ModelRegistry {
-			api.CreateMigration(&model)
+	}
+}
+
+func Migrate() {
+	files, err := os.ReadDir("./app/migrations")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, file := range files {
+		bytes, err := os.ReadFile(fmt.Sprintf("%s/%s", "./app/migrations", file.Name()))
+		if err != nil {
+			panic(err)
 		}
 
-		for _, migration := range api.MigrationRegistry {
-			file, err := os.Create(fmt.Sprintf("%v/%v-%v.sql", "./app/migrations", migration.Index, migration.Table))
-			if err != nil {
-				panic(err)
-			}
-			defer file.Close()
-
-			_, err = file.WriteString(migration.Query)
-			if err != nil {
-				panic(err)
-			}
-
-			err = migration.Drop()
-			if err != nil {
-				panic(err)
-			}
+		_, err = api.Instance.DataBase.Exec(string(bytes))
+		if err != nil {
+			panic(err)
 		}
-	} else {
-		log.Fatal("Please choose an action: [run, makemigrations, migrate]")
 	}
 }
