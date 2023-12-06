@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ var Callbacks = map[string] Callback {
 	"run": Run,
 	"makemigrations": MakeMigrations,
 	"migrate": Migrate,
+	"watch": Watch,
 }
 
 func main() {
@@ -103,4 +105,75 @@ func Migrate() {
 			panic(err)
 		}
 	}
+}
+
+func Watch() {
+	_, err := os.Stat("./.tailwind")
+	if os.IsNotExist(err) {
+		err = os.Mkdir(".tailwind", os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	_, err = os.Stat("./.tailwind/tailwind")
+	if os.IsNotExist(err) {
+		log.Println("Failed to locate tailwind, downloading the binary...")
+
+		response, err := http.Get("https://github.com/tailwindlabs/tailwindcss/releases/download/v3.3.6/tailwindcss-linux-x64")
+		if err != nil {
+			panic(err)
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			log.Fatalf("Error: Unexpected status code [%v]\n", response.Status)
+		}
+
+		destFile, err := os.Create("./.tailwind/tailwind")
+		if err != nil {
+			panic(err)
+		}
+		defer destFile.Close()
+
+		_, err = io.Copy(destFile, response.Body)
+		if err != nil {
+			panic(err)
+		}
+		
+		log.Println("TailwindCSS binary downloaded!")
+
+		err = destFile.Chmod(0755)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	process, err := os.StartProcess(
+		"./.tailwind/tailwind",
+		[] string {
+			"./.tailwind/tailwind",
+			"-i", "./app/style.css",
+			"-o", "./app/static/global.css",
+			"--watch",
+		},
+		&os.ProcAttr {
+			Files: [] *os.File {
+				os.Stdin, 
+				os.Stdout, 
+				os.Stderr,
+			},
+		},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	state, err := process.Wait()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Process finished with exit code:", state.ExitCode())
 }
