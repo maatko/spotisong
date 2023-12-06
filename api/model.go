@@ -25,6 +25,7 @@ type ModelField struct {
 }
 
 type ModelInformation struct {
+	Index int
 	Name string
 	Fields [] ModelField
 }
@@ -54,6 +55,7 @@ var ModelTypeConversionPairs map[string] string = map[string] string  {
 // this is used everywhere starting from migrations
 // all the way to inserting into and fetching from the database
 var ModelRegistry map [string] ModelInformation = map [string] ModelInformation {}
+var ModelRegistryIndex int = 0
 
 func RegisterModel(definition any) error {
 	definitionType := reflect.TypeOf(definition)
@@ -98,10 +100,12 @@ func RegisterModel(definition any) error {
 	}
 
 	ModelRegistry[definitionName] = ModelInformation {
+		Index : ModelRegistryIndex,
 		Name: strings.ToLower(definitionName),
 		Fields: fields,
 	}
 
+	ModelRegistryIndex++
 	return nil
 }
 

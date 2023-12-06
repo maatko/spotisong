@@ -16,7 +16,7 @@ import (
 func main() {
 	args := os.Args[1:]
 	if len(args) < 1 {
-		log.Fatal("Please choose an action: [run, migrate]")
+		log.Fatal("Please choose an action: [run, makemigrations, migrate]")
 	}
 
 	err := godotenv.Load()
@@ -53,8 +53,45 @@ func main() {
 			api.Instance.Port,
 		), nil)
 	} else if action == "migrate" {
-		// TODO :: run all the migrations
+		files, err := os.ReadDir("./app/migrations")
+		if err != nil {
+			panic(err)
+		}
+
+		for _, file := range files {
+			bytes, err := os.ReadFile(fmt.Sprintf("%s/%s", "./app/migrations", file.Name()))
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = api.Instance.DataBase.Exec(string(bytes))
+			if err != nil {
+				panic(err)
+			}
+		}
+	} else if action == "makemigrations" {
+		for _, model := range api.ModelRegistry {
+			api.CreateMigration(&model)
+		}
+
+		for _, migration := range api.MigrationRegistry {
+			file, err := os.Create(fmt.Sprintf("%v/%v-%v.sql", "./app/migrations", migration.Index, migration.Table))
+			if err != nil {
+				panic(err)
+			}
+			defer file.Close()
+
+			_, err = file.WriteString(migration.Query)
+			if err != nil {
+				panic(err)
+			}
+
+			err = migration.Drop()
+			if err != nil {
+				panic(err)
+			}
+		}
 	} else {
-		log.Fatal("Please choose an action: [run, migrate]")
+		log.Fatal("Please choose an action: [run, makemigrations, migrate]")
 	}
 }

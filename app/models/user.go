@@ -14,7 +14,7 @@ type User struct {
 	Password string `max_length:"1024"`
 
 	// date
-	CreatedAt time.Time `default:"CURRENT_TIMESTAMP"`
+	Created_At time.Time `default:"CURRENT_TIMESTAMP"`
 }
 
 func (user User) Register() {

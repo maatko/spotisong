@@ -15,8 +15,8 @@ type Post struct {
 	Text string `max_length:"1024"`
 
 	// dates
-	CreatedAt time.Time `default:"CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time `default:"CURRENT_TIMESTAMP"`
+	Created_At time.Time `default:"CURRENT_TIMESTAMP"`
+	Updated_At time.Time `default:"CURRENT_TIMESTAMP"`
 }
 
 func (post Post) Register() {
