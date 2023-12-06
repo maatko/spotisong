@@ -1,6 +1,10 @@
 package api
 
-import "database/sql"
+import (
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
+)
 
 type API struct {
 	DataBase *sql.DB
@@ -10,7 +14,7 @@ type API struct {
 
 var Instance API = API {}
 
-func (api API) Create(database string) API {
+func (api API) Initialize(database string) API {
 	db, err := sql.Open("sqlite3", database)
 	if err != nil {
 		panic(err)
