@@ -83,15 +83,6 @@ func MakeMigrations() {
 		if err != nil {
 			panic(err)
 		}
-
-		// TODO :: in the future make this so it
-		// doesn't drop the whole table but detect
-		// the changes in the migration and if needed
-		// it drops the table
-		err = migration.Drop()
-		if err != nil {
-			panic(err)
-		}
 	}
 }
 

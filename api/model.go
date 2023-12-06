@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -108,6 +110,151 @@ func RegisterModel(definition any) error {
 	ModelRegistryIndex++
 	return nil
 }
+
+func GetModel(definition any) (*ModelInformation, error) {
+	definitionType := reflect.TypeOf(definition)
+	definitionName := definitionType.Name()
+
+	if model, ok :=  ModelRegistry[definitionName]; ok {
+		return &model, nil
+	}
+
+	return nil, fmt.Errorf("model with the name of '%v' does not exist", definitionName)
+}
+
+///////////////////////////////////////////
+// Model
+///////////////////////////////////////////
+
+func (model ModelInformation) FetchBy(tags ...string) (*sql.Rows, error) {
+	var query strings.Builder
+
+	query.WriteString(fmt.Sprintf("SELECT * FROM %v", model.Name))
+
+	query.WriteString(" WHERE ")
+	for idx, tag := range tags {
+		query.WriteString(fmt.Sprintf("%v = ?", tag))
+		if idx < len(tags) - 1 {
+			query.WriteString(" AND ")
+		}
+	}
+
+	stmt, err := Instance.DataBase.Prepare(query.String())
+	if err != nil {
+		return nil, err
+	}
+
+	var args [] any
+	for _, field := range model.Fields {
+		for _, tag := range tags {
+			if field.Name == tag {
+				args = append(args, field.GetValue())
+				break
+			}
+		}
+	}
+
+	defer stmt.Close()
+	return stmt.Query(args...)
+}
+
+func (model ModelInformation) Insert(definition any) error {
+	providedModel, err := GetModel(definition)
+	if err != nil {
+		return err
+	}
+
+	if providedModel.Index != model.Index {
+		return errors.New("model for the provided definition does not match the invoked model")
+	}
+
+	var query strings.Builder
+	
+	query.WriteString("INSERT INTO ")
+	query.WriteString(model.Name)
+	query.WriteString(" (")
+
+	fieldsCount := len(model.Fields)
+	for idx, field := range model.Fields {
+		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
+			fieldsCount--
+			continue
+		}
+
+		query.WriteString(field.Name)
+
+		if idx < fieldsCount - 1 {
+			query.WriteString(", ")
+		}
+	}
+	query.WriteString(") VALUES (")
+	for i := 0; i < fieldsCount; i++ {
+		query.WriteString("?")
+		if i < fieldsCount - 1 {
+			query.WriteString(", ")
+		}
+	}
+	query.WriteString(")")
+
+	definitionType := reflect.TypeOf(definition)
+	definitionValue := reflect.ValueOf(definition)
+
+	var args [] any
+	for i := 0; i < definitionType.NumField(); i++ {
+		fieldValue := definitionValue.Field(i)
+		fieldType := definitionType.Field(i)
+		modelField := model.Fields[i]
+		if modelField.Properties.AutoIncrement || len(modelField.Properties.Default) > 0 {
+			continue
+		}
+
+		var value any
+		if fieldValue.CanInt() {
+			value = fieldValue.Int()
+		} else if fieldValue.CanFloat() {
+			value = fieldValue.Float()
+		} else if fieldType.Type.Kind() == reflect.Bool {
+			value = fieldValue.Bool()
+		} else {
+			value = fieldValue.String()
+		}
+
+		args = append(args, value)
+	}
+
+	stmt, err := Instance.DataBase.Prepare(query.String())
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(args...)
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+///////////////////////////////////////////
+// ModelField
+///////////////////////////////////////////
+
+func (field ModelField) GetValue() any {
+	if field.NativeValue.CanInt() {
+		return field.NativeValue.Int()
+	} else if field.NativeValue.CanFloat() {
+		return field.NativeValue.Float()
+	} else if field.NativeType.Type.Kind() == reflect.Bool {
+		return field.NativeValue.Bool()
+	} else {
+		return field.NativeValue.String()
+	}
+}
+
+///////////////////////////////////////////
+// ModelFieldProperties
+///////////////////////////////////////////
 
 func (properties *ModelFieldProperties) Load(tag reflect.StructTag, typeName string, definitionName string, fieldName string) error {
 	if key, ok := tag.Lookup("key"); ok {

@@ -19,6 +19,15 @@ var MigrationRegistry map [string] Migration = map [string] Migration {}
 func CreateMigration(model *ModelInformation) error {
 	var builder strings.Builder
 
+	// TODO :: Dropping the table every single time the
+	// migration is ran is not a good idea, changes need
+	// to be detect based on the state of the database
+	// and if any changes were detected the the table
+	// needs to be dropped
+	builder.WriteString("DROP TABLE IF EXISTS ")
+	builder.WriteString(model.Name)
+	builder.WriteString("; ")
+
 	builder.WriteString("CREATE TABLE IF NOT EXISTS ")
 	builder.WriteString(model.Name)
 	builder.WriteString(" (")
@@ -66,13 +75,5 @@ func CreateMigration(model *ModelInformation) error {
 		Query: builder.String(),
 	}
 
-	return nil
-}
-
-func (migration Migration) Drop() error {
-	_, err := Instance.DataBase.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v", migration.Table))
-	if err != nil {
-		return err
-	}
 	return nil
 }
