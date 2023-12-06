@@ -1,5 +1,9 @@
 package api
 
+// TODO :: This code is fully functional, but it does
+// need major cleanup and simplification. Can be done
+// at a later date, but must be done!
+
 import (
 	"database/sql"
 	"errors"
@@ -277,22 +281,6 @@ func (model ModelInformation) Insert(definition any) error {
 	}
 	
 	return nil
-}
-
-///////////////////////////////////////////
-// ModelField
-///////////////////////////////////////////
-
-func (field ModelField) GetValue() any {
-	if field.NativeValue.CanInt() {
-		return field.NativeValue.Int()
-	} else if field.NativeValue.CanFloat() {
-		return field.NativeValue.Float()
-	} else if field.NativeType.Type.Kind() == reflect.Bool {
-		return field.NativeValue.Bool()
-	} else {
-		return field.NativeValue.String()
-	}
 }
 
 ///////////////////////////////////////////

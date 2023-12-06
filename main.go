@@ -51,8 +51,7 @@ func main() {
 	// register all models & routes in the
 	// main application
 	app.OnModelRegister()
-	app.OnRouteRegister()
-
+	
 	if callback, ok := Callbacks[strings.ToLower(args[0])]; ok {
 		callback()
 	} else {
@@ -61,12 +60,14 @@ func main() {
 }
 
 func Run() {
-	fmt.Printf("HTTP server started on '%v:%v'...\n", api.Instance.Address, api.Instance.Port)
+	handler := app.OnRouteRegister()
+	
+	log.Printf("HTTP server started on '%v:%v'...\n", api.Instance.Address, api.Instance.Port)
 	http.ListenAndServe(fmt.Sprintf(
 		"%v:%v",
 		api.Instance.Address,
 		api.Instance.Port,
-	), nil)
+	), handler)
 }
 
 func MakeMigrations() {
