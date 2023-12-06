@@ -32,7 +32,7 @@ func (user *User) FetchBy(tags ...string)  error {
 		return err
 	}
 
-	rows, err := model.FetchBy(tags...)
+	rows, err := model.FetchBy(*user, tags...)
 	if err != nil {
 		return err
 	}

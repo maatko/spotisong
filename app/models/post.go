@@ -25,3 +25,12 @@ func (post Post) Register() {
 		panic(err)
 	}
 }
+
+func (post *Post) Insert() error {
+	model, err := api.GetModel(*post)
+	if err != nil {
+		return err
+	}
+	
+	return model.Insert(*post)
+}

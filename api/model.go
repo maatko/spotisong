@@ -126,7 +126,7 @@ func GetModel(definition any) (*ModelInformation, error) {
 // Model
 ///////////////////////////////////////////
 
-func (model ModelInformation) FetchBy(tags ...string) (*sql.Rows, error) {
+func (model ModelInformation) FetchBy(definition any, tags ...string) (*sql.Rows, error) {
 	var query strings.Builder
 
 	query.WriteString(fmt.Sprintf("SELECT * FROM %v", model.Name))
@@ -144,14 +144,30 @@ func (model ModelInformation) FetchBy(tags ...string) (*sql.Rows, error) {
 		return nil, err
 	}
 
+	definitionType := reflect.TypeOf(definition)
+	definitionValue := reflect.ValueOf(definition)
+
 	var args [] any
-	for _, field := range model.Fields {
-		for _, tag := range tags {
-			if field.Name == tag {
-				args = append(args, field.GetValue())
-				break
-			}
+	for i := 0; i < definitionType.NumField(); i++ {
+		fieldValue := definitionValue.Field(i)
+		fieldType := definitionType.Field(i)
+		modelField := model.Fields[i]
+		if modelField.Properties.AutoIncrement || len(modelField.Properties.Default) > 0 {
+			continue
 		}
+
+		var value any
+		if fieldValue.CanInt() {
+			value = fieldValue.Int()
+		} else if fieldValue.CanFloat() {
+			value = fieldValue.Float()
+		} else if fieldType.Type.Kind() == reflect.Bool {
+			value = fieldValue.Bool()
+		} else {
+			value = fieldValue.String()
+		}
+
+		args = append(args, value)
 	}
 
 	defer stmt.Close()
@@ -175,22 +191,34 @@ func (model ModelInformation) Insert(definition any) error {
 	query.WriteString(" (")
 
 	fieldsCount := len(model.Fields)
-	for idx, field := range model.Fields {
+	for _, field := range model.Fields {
 		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
-			fieldsCount--
+			fieldsCount -= 1
+			continue
+		}
+	}
+
+	for i := 0; i < fieldsCount + 1; i++ {
+		field := model.Fields[i]
+		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
 			continue
 		}
 
 		query.WriteString(field.Name)
-
-		if idx < fieldsCount - 1 {
+		if i <= fieldsCount - 1 {
 			query.WriteString(", ")
 		}
 	}
 	query.WriteString(") VALUES (")
-	for i := 0; i < fieldsCount; i++ {
+	for i := 0; i < fieldsCount + 1; i++ {
+		field := model.Fields[i]
+		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
+			continue
+		}
+
 		query.WriteString("?")
-		if i < fieldsCount - 1 {
+		
+		if i <= fieldsCount - 1 {
 			query.WriteString(", ")
 		}
 	}
@@ -209,14 +237,29 @@ func (model ModelInformation) Insert(definition any) error {
 		}
 
 		var value any
-		if fieldValue.CanInt() {
-			value = fieldValue.Int()
-		} else if fieldValue.CanFloat() {
-			value = fieldValue.Float()
-		} else if fieldType.Type.Kind() == reflect.Bool {
-			value = fieldValue.Bool()
+
+		if modelField.Properties.BelongsTo != nil {
+			ownerType := reflect.TypeOf(fieldValue.Interface())
+			ownerValue := reflect.ValueOf(fieldValue.Interface())
+			
+			for i := 0; i < ownerType.NumField(); i++ {
+				ownerFieldValue := ownerValue.Field(i)
+				ownerModelField := modelField.Properties.BelongsTo.Fields[i]
+				if ownerModelField.Properties.AutoIncrement {
+					value = ownerFieldValue.Int()
+					break
+				}
+			}
 		} else {
-			value = fieldValue.String()
+			if fieldValue.CanInt() {
+				value = fieldValue.Int()
+			} else if fieldValue.CanFloat() {
+				value = fieldValue.Float()
+			} else if fieldType.Type.Kind() == reflect.Bool {
+				value = fieldValue.Bool()
+			} else {
+				value = fieldValue.String()
+			}
 		}
 
 		args = append(args, value)
