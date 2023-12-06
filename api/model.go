@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ModelFieldProperties struct {
@@ -103,6 +104,24 @@ func RegisterModel(definition any) error {
 	}
 
 	return nil
+}
+
+func (field ModelField) SearchFor() bool {
+	if field.Type == "TIMESTAMP" {
+		if time, ok := field.NativeValue.Interface().(time.Time); ok {
+			year, month, day := time.Date()
+			return year == 1 && month.String() == "January" && day == 1
+		} 
+		return false
+	} else if field.Type == "VARCHAR" {
+		return len(field.NativeValue.String()) > 0
+	} else if field.Type == "INTEGER" {
+		return field.NativeValue.Int() > 0
+	} else if field.Type == "FLOAT" {
+		return field.NativeValue.Float() > 0
+	} else {
+		return false
+	}
 }
 
 func (properties *ModelFieldProperties) Load(tag reflect.StructTag, typeName string, definitionName string, fieldName string) error {
