@@ -7,12 +7,12 @@ import (
 
 type Post struct {
 	// relationships
-	ID int 				`key:"primary"`
-	Owner User 			`key:"foreign"`
+	ID int `key:"primary"`
+	Owner User `key:"foreign"`
 
 	// data
-	Title string 		`max_length:"255"`
-	Text string 		`max_length:"1024"`
+	Title string `max_length:"255"`
+	Text string `max_length:"1024"`
 
 	// dates
 	CreatedAt time.Time `default:"CURRENT_TIMESTAMP"`
