@@ -3,8 +3,16 @@ package api
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
+
+type ModelFieldProperties struct {
+	MaxLength int
+	Default string
+	AutoIncrement bool
+	BelongsTo *ModelInformation
+}
 
 type ModelField struct {
 	NativeType reflect.StructField
@@ -13,8 +21,7 @@ type ModelField struct {
 	Name string
 	Type string
 
-	AutoIncrement bool
-	BelongsTo *ModelInformation
+	Properties ModelFieldProperties
 }
 
 type ModelInformation struct {
@@ -62,6 +69,7 @@ func RegisterModel(definition any) error {
 			NativeType: fieldType,
 			NativeValue: fieldValue,
 			Name: strings.ToLower(fieldType.Name),
+			Properties: ModelFieldProperties {},
 		}
 
 		var typeName string
@@ -71,28 +79,15 @@ func RegisterModel(definition any) error {
 			typeName = fieldType.Type.Kind().String()
 		}
 		
-		tag := fieldType.Tag
-		
-		if key, ok := tag.Lookup("key"); ok {
-			if key == "primary" {
-				field.AutoIncrement = true
-				field.BelongsTo = nil
-			} else if key == "foreign" {
-				field.AutoIncrement = false
-				if model, ok := ModelRegistry[typeName]; ok {
-					field.BelongsTo = &model
-				} else {
-					return fmt.Errorf("'%v' belongs to a model that was not created '%v'", definitionName, typeName)
-				}
-			} else {
-				return fmt.Errorf("field '%v' has a key property with invalid value '%v'", fieldType.Name, key)
-			}
+		err := field.Properties.Load(fieldType.Tag, typeName, definitionName, fieldType.Name)
+		if err != nil {
+			return err
 		}
 		
 		if sqlType, ok := ModelTypeConversionPairs[typeName]; ok {
 			field.Type = sqlType
 		} else {
-			if field.AutoIncrement || field.BelongsTo != nil {
+			if field.Properties.AutoIncrement || field.Properties.BelongsTo != nil {
 				field.Type = "INTEGER"
 			} else {
 				return fmt.Errorf("field '%v' in Type '%v' does not have a valid SQL type", fieldType.Name, definitionName)
@@ -105,6 +100,39 @@ func RegisterModel(definition any) error {
 	ModelRegistry[definitionName] = ModelInformation {
 		Name: strings.ToLower(definitionName),
 		Fields: fields,
+	}
+
+	return nil
+}
+
+func (properties *ModelFieldProperties) Load(tag reflect.StructTag, typeName string, definitionName string, fieldName string) error {
+	if key, ok := tag.Lookup("key"); ok {
+		if key == "primary" {
+			properties.AutoIncrement = true
+			properties.BelongsTo = nil
+		} else if key == "foreign" {
+			properties.AutoIncrement = false
+			if model, ok := ModelRegistry[typeName]; ok {
+				properties.BelongsTo = &model
+			} else {
+				return fmt.Errorf("'%v' belongs to a model that was not created '%v'", definitionName, typeName)
+			}
+		} else {
+			return fmt.Errorf("field '%v' has a key property with invalid value '%v'", fieldName, key)
+		}
+	}
+
+	if maxLength, ok := tag.Lookup("max_length"); ok {
+		length, err := strconv.Atoi(maxLength)
+		if err != nil {
+			return fmt.Errorf("field '%v' has to be an valid number value", fieldName)
+		}
+
+		properties.MaxLength = length
+	}
+
+	if defaultValue, ok := tag.Lookup("default"); ok {
+		properties.Default = defaultValue
 	}
 
 	return nil

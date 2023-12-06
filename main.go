@@ -46,8 +46,6 @@ func main() {
 
 	action := strings.ToLower(args[0])
 	if action == "run" {
-		// TODO :: run the http server
-
 		fmt.Printf("HTTP server started on '%v:%v'...\n", api.Instance.Address, api.Instance.Port)
 		http.ListenAndServe(fmt.Sprintf(
 			"%v:%v",
