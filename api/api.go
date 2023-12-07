@@ -1,25 +1,26 @@
 package api
 
 import (
-	"database/sql"
-
-	_ "github.com/mattn/go-sqlite3"
+	"fmt"
+	"reflect"
 )
 
-type API struct {
-	DataBase *sql.DB
-	Address string
-	Port int
-}
+var Models map [string] Model = map [string] Model {}
 
-var Instance API = API {}
-
-func (api API) Initialize(database string) API {
-	db, err := sql.Open("sqlite3", database)
-	if err != nil {
-		panic(err)
+func RegisterModel(impl any) error {
+	model, modelName := ModelCreate(impl)
+	if _, ok := Models[modelName]; ok {
+		return fmt.Errorf("'%s' model already exists", modelName)
 	}
 
-	api.DataBase = db
-	return api
+	Models[modelName] = model
+	return nil
+}
+
+func GetModel(impl any) (Model, error) {
+	implName := reflect.TypeOf(impl).Name()
+	if implModel, ok := Models[implName]; ok {
+		return implModel.CreateFields(impl), nil
+	}
+	return Model {}, fmt.Errorf("model with the name of '%v' does not exist", implName)
 }

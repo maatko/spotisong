@@ -1,34 +1,28 @@
 package app
 
 import (
-	"net/http"
 	"spotisong/api"
-	"spotisong/app/models"
-	"spotisong/app/routes"
-
-	"github.com/gorilla/mux"
+	"time"
 )
 
-func OnRouteRegister() http.Handler {
-	/////////////////////////////////////////
-	// Register all your routes here
-	/////////////////////////////////////////
-	router := mux.NewRouter().StrictSlash(true)
-
-	routes.AuthenticationRoute {
-		Route: api.Route {
-			Root: "",
-		},
-	}.Setup(router)
-
-	return router
+type User struct {
+	ID int `key:"primary"`
+	Email string `max_length:"512"`
+	Username string `max_length:"255"`
+	Password string `max_length:"1024"`
+	CreatedAt time.Time `default:"TIMESTAMP"`
 }
 
-func OnModelRegister() {
-	/////////////////////////////////////////
-	// Register all your models here
-	/////////////////////////////////////////
+type Post struct {
+	ID int `key:"primary"`
+	Owner User `key:"foreign"`
+	Title string `max_length:"255"`
+	Text string `max_length:"1024"`
+	CreatedAt time.Time `default:"TIMESTAMP"`
+	UpdatedAt time.Time `default:"TIMESTAMP"`
+}
 
-	models.User {}.Register()
-	models.Post {}.Register()
+func Initialize() {
+	api.RegisterModel(User {})
+	api.RegisterModel(Post {})
 }

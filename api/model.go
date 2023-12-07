@@ -1,12 +1,6 @@
 package api
 
-// TODO :: This code is fully functional, but it does
-// need major cleanup and simplification. Can be done
-// at a later date, but must be done!
-
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -15,31 +9,32 @@ import (
 
 type ModelFieldProperties struct {
 	MaxLength int
+	PrimaryKey bool
 	Default string
-	AutoIncrement bool
-	BelongsTo *ModelInformation
+	BelongsTo *Model
 }
 
 type ModelField struct {
-	NativeType reflect.StructField
-	NativeValue reflect.Value
-
 	Name string
 	Type string
-
+	Meta reflect.StructField
+	Info reflect.StructTag
+	Value reflect.Value
 	Properties ModelFieldProperties
 }
 
-type ModelInformation struct {
-	Index int
+type Model struct {
+	ID int
 	Name string
 	Fields [] ModelField
 }
 
-// used when converting from `golang` data types
-// to types that the database `sqlite3` recognizes
-// TODO :: (match these types more closly)
-var ModelTypeConversionPairs map[string] string = map[string] string  {
+//////////////////////////
+// Type Conversion
+// (TODO :: More precise type conversion)
+//////////////////////////
+
+var SQL_TYPES map[string] string = map[string] string  {
 	"bool": 	"BOOLEAN",
 	"string": 	"VARCHAR",
 	"uint8": 	"INTEGER",
@@ -57,265 +52,98 @@ var ModelTypeConversionPairs map[string] string = map[string] string  {
 	"Time": 	"TIMESTAMP",
 }
 
-// a cache for all the registered models
-// this is used everywhere starting from migrations
-// all the way to inserting into and fetching from the database
-var ModelRegistry map [string] ModelInformation = map [string] ModelInformation {}
-var ModelRegistryIndex int = 0
-
-func RegisterModel(definition any) error {
-	definitionType := reflect.TypeOf(definition)
-	definitionValue := reflect.ValueOf(definition)
-	definitionName := definitionType.Name()
-
-	var fields = [] ModelField {}
-	for i := 0; i < definitionType.NumField(); i++ {
-		fieldType := definitionType.Field(i)
-		fieldValue := definitionValue.Field(i)
-
-		field := ModelField {
-			NativeType: fieldType,
-			NativeValue: fieldValue,
-			Name: strings.ToLower(fieldType.Name),
-			Properties: ModelFieldProperties {},
-		}
-
-		var typeName string
-		if fieldType.Type.Kind() == reflect.Struct {
-			typeName = reflect.TypeOf(fieldValue.Interface()).Name()
-		} else {
-			typeName = fieldType.Type.Kind().String()
-		}
-		
-		err := field.Properties.Load(fieldType.Tag, typeName, definitionName, fieldType.Name)
-		if err != nil {
-			return err
-		}
-		
-		if sqlType, ok := ModelTypeConversionPairs[typeName]; ok {
-			field.Type = sqlType
-		} else {
-			if field.Properties.AutoIncrement || field.Properties.BelongsTo != nil {
-				field.Type = "INTEGER"
-			} else {
-				return fmt.Errorf("field '%v' in Type '%v' does not have a valid SQL type", fieldType.Name, definitionName)
-			}
-		}
-
-		fields = append(fields, field)
-	}
-
-	ModelRegistry[definitionName] = ModelInformation {
-		Index : ModelRegistryIndex,
-		Name: strings.ToLower(definitionName),
-		Fields: fields,
-	}
-
-	ModelRegistryIndex++
-	return nil
-}
-
-func GetModel(definition any) (*ModelInformation, error) {
-	definitionType := reflect.TypeOf(definition)
-	definitionName := definitionType.Name()
-
-	if model, ok :=  ModelRegistry[definitionName]; ok {
-		return &model, nil
-	}
-
-	return nil, fmt.Errorf("model with the name of '%v' does not exist", definitionName)
-}
-
-///////////////////////////////////////////
+//////////////////////////
 // Model
-///////////////////////////////////////////
+//////////////////////////
 
-func (model ModelInformation) FetchBy(definition any, tags ...string) (*sql.Rows, error) {
-	var query strings.Builder
-
-	query.WriteString(fmt.Sprintf("SELECT * FROM %v", model.Name))
-
-	query.WriteString(" WHERE ")
-	for idx, tag := range tags {
-		query.WriteString(fmt.Sprintf("%v = ?", tag))
-		if idx < len(tags) - 1 {
-			query.WriteString(" AND ")
-		}
-	}
-
-	stmt, err := Instance.DataBase.Prepare(query.String())
-	if err != nil {
-		return nil, err
-	}
-
-	definitionType := reflect.TypeOf(definition)
-	definitionValue := reflect.ValueOf(definition)
-
-	var args [] any
-	for i := 0; i < definitionType.NumField(); i++ {
-		fieldValue := definitionValue.Field(i)
-		fieldType := definitionType.Field(i)
-		modelField := model.Fields[i]
-		if modelField.Properties.AutoIncrement || len(modelField.Properties.Default) > 0 {
-			continue
-		}
-
-		var value any
-		if fieldValue.CanInt() {
-			value = fieldValue.Int()
-		} else if fieldValue.CanFloat() {
-			value = fieldValue.Float()
-		} else if fieldType.Type.Kind() == reflect.Bool {
-			value = fieldValue.Bool()
-		} else {
-			value = fieldValue.String()
-		}
-
-		args = append(args, value)
-	}
-
-	defer stmt.Close()
-	return stmt.Query(args...)
+func ModelCreate(impl any) (Model, string) {
+	implName := reflect.TypeOf(impl).Name()
+	return Model {
+		ID: len(Models),
+		Name: strings.ToLower(implName),
+	}.CreateFields(impl), implName
 }
 
-func (model ModelInformation) Insert(definition any) error {
-	providedModel, err := GetModel(definition)
-	if err != nil {
-		return err
+func (model Model) CreateFields(impl any) Model {
+	implType := reflect.TypeOf(impl)
+	implValue := reflect.ValueOf(impl)
+
+	// make sure to create new slice of fields
+	// for the model so it doesn't get appended
+	// to the old slice of fields in the model
+	model.Fields = [] ModelField {}
+
+	for i := 0; i < implType.NumField(); i++ {
+		fieldType := implType.Field(i)
+		fieldValue := implValue.Field(i)
+
+		fieldSQLType := "INTEGER"
+		if fieldType.Type.Kind() != reflect.Struct {
+			typeName := fieldType.Type.Kind().String()
+			if sqlType, ok := SQL_TYPES[typeName]; ok {
+				fieldSQLType = sqlType
+			} else {
+				panic(fmt.Sprintf("Type '%v' in '%v' does not have a SQL type", typeName, implType.Name()))
+			}
+		}
+
+		model.Fields = append(model.Fields, ModelField {
+			Name: fieldType.Name,
+			Type: fieldSQLType,
+			Meta: fieldType,
+			Info: fieldType.Tag,
+			Value: fieldValue,
+		}.ReadProperties())
 	}
 
-	if providedModel.Index != model.Index {
-		return errors.New("model for the provided definition does not match the invoked model")
-	}
+	return model
+}
 
-	var query strings.Builder
-	
-	query.WriteString("INSERT INTO ")
-	query.WriteString(model.Name)
-	query.WriteString(" (")
-
-	fieldsCount := len(model.Fields)
+func (model Model) GetPrimaryField() *ModelField {
 	for _, field := range model.Fields {
-		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
-			fieldsCount -= 1
-			continue
+		if field.Properties.PrimaryKey {
+			return &field
 		}
 	}
-
-	for i := 0; i < fieldsCount + 1; i++ {
-		field := model.Fields[i]
-		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
-			continue
-		}
-
-		query.WriteString(field.Name)
-		if i <= fieldsCount - 1 {
-			query.WriteString(", ")
-		}
-	}
-	query.WriteString(") VALUES (")
-	for i := 0; i < fieldsCount + 1; i++ {
-		field := model.Fields[i]
-		if field.Properties.AutoIncrement || len(field.Properties.Default) > 0 {
-			continue
-		}
-
-		query.WriteString("?")
-		
-		if i <= fieldsCount - 1 {
-			query.WriteString(", ")
-		}
-	}
-	query.WriteString(")")
-
-	definitionType := reflect.TypeOf(definition)
-	definitionValue := reflect.ValueOf(definition)
-
-	var args [] any
-	for i := 0; i < definitionType.NumField(); i++ {
-		fieldValue := definitionValue.Field(i)
-		fieldType := definitionType.Field(i)
-		modelField := model.Fields[i]
-		if modelField.Properties.AutoIncrement || len(modelField.Properties.Default) > 0 {
-			continue
-		}
-
-		var value any
-
-		if modelField.Properties.BelongsTo != nil {
-			ownerType := reflect.TypeOf(fieldValue.Interface())
-			ownerValue := reflect.ValueOf(fieldValue.Interface())
-			
-			for i := 0; i < ownerType.NumField(); i++ {
-				ownerFieldValue := ownerValue.Field(i)
-				ownerModelField := modelField.Properties.BelongsTo.Fields[i]
-				if ownerModelField.Properties.AutoIncrement {
-					value = ownerFieldValue.Int()
-					break
-				}
-			}
-		} else {
-			if fieldValue.CanInt() {
-				value = fieldValue.Int()
-			} else if fieldValue.CanFloat() {
-				value = fieldValue.Float()
-			} else if fieldType.Type.Kind() == reflect.Bool {
-				value = fieldValue.Bool()
-			} else {
-				value = fieldValue.String()
-			}
-		}
-
-		args = append(args, value)
-	}
-
-	stmt, err := Instance.DataBase.Prepare(query.String())
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(args...)
-	if err != nil {
-		return err
-	}
-	
-	return nil
+	return nil;
 }
 
-///////////////////////////////////////////
-// ModelFieldProperties
-///////////////////////////////////////////
+//////////////////////////
+// ModelField
+//////////////////////////
 
-func (properties *ModelFieldProperties) Load(tag reflect.StructTag, typeName string, definitionName string, fieldName string) error {
-	if key, ok := tag.Lookup("key"); ok {
-		if key == "primary" {
-			properties.AutoIncrement = true
-			properties.BelongsTo = nil
-		} else if key == "foreign" {
-			properties.AutoIncrement = false
-			if model, ok := ModelRegistry[typeName]; ok {
-				properties.BelongsTo = &model
-			} else {
-				return fmt.Errorf("'%v' belongs to a model that was not created '%v'", definitionName, typeName)
-			}
-		} else {
-			return fmt.Errorf("field '%v' has a key property with invalid value '%v'", fieldName, key)
-		}
-	}
+func (field ModelField) ReadProperties() ModelField {
+	properties := &field.Properties
 
-	if maxLength, ok := tag.Lookup("max_length"); ok {
-		length, err := strconv.Atoi(maxLength)
+	var err error
+	if value, ok := field.Info.Lookup("max_length"); ok {
+		properties.MaxLength, err = strconv.Atoi(value)
 		if err != nil {
-			return fmt.Errorf("field '%v' has to be an valid number value", fieldName)
+			panic(fmt.Sprintf("'%v' has a max length attribute that is not a number (%v)", field.Name, value))
 		}
-
-		properties.MaxLength = length
 	}
 
-	if defaultValue, ok := tag.Lookup("default"); ok {
-		properties.Default = defaultValue
+	if value, ok := field.Info.Lookup("key"); ok {
+		if value == "primary" {
+			properties.PrimaryKey = true
+		} else if value == "foreign" {
+			properties.PrimaryKey = false
+
+			if field.Meta.Type.Kind() != reflect.Struct {
+				panic(fmt.Sprintf("'%v' has a foreign key attribute but is not a struct", field.Name))
+			}
+
+			ownerModel, err := GetModel(field.Value.Interface())
+			if err != nil {
+				panic(err)
+			}
+
+			properties.BelongsTo = &ownerModel
+		} else {
+			panic(fmt.Sprintf("'%v' has a invalid key attribute (%v) <primary/foreign>", field.Name, value))
+		}
 	}
 
-	return nil
+	properties.Default = field.Info.Get("default")
+	return field
 }
