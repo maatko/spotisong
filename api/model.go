@@ -88,7 +88,7 @@ func (model Model) CreateFields(impl any) Model {
 		}
 
 		model.Fields = append(model.Fields, ModelField {
-			Name: fieldType.Name,
+			Name: strings.ToLower(fieldType.Name),
 			Type: fieldSQLType,
 			Meta: fieldType,
 			Info: fieldType.Tag,
