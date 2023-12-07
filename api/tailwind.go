@@ -12,23 +12,23 @@ import (
 )
 
 type TailWind struct {
-	Version string
-	Binary string
+	Version     string
+	Binary      string
 	ProgressBar *pb.ProgressBar
 }
 
 func (tailwind *TailWind) Watch(input string, output string) error {
 	tailwind.Setup()
 
-	attrs := os.ProcAttr {
-		Files: [] *os.File {
+	attrs := os.ProcAttr{
+		Files: []*os.File{
 			os.Stdin,
 			os.Stdout,
 			os.Stderr,
 		},
 	}
 
-	process, err := os.StartProcess(tailwind.Binary, [] string {
+	process, err := os.StartProcess(tailwind.Binary, []string{
 		tailwind.Binary,
 		"-i", input,
 		"-o", output,
@@ -41,7 +41,7 @@ func (tailwind *TailWind) Watch(input string, output string) error {
 
 	state, err := process.Wait()
 	if err != nil {
-		return err		
+		return err
 	}
 
 	fmt.Printf("Process exited with status %v\n", state.ExitCode())

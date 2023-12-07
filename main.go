@@ -9,15 +9,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func Watch(args [] string) {
-	tailwind := api.TailWind {
+func Watch(args []string) {
+	tailwind := api.TailWind{
 		Version: os.Getenv("TAILWIND_VERSION"),
-		Binary: "./.tailwind/",
+		Binary:  "./.tailwind/",
 	}
 
 	err := tailwind.Watch(
 		"./app/style.css",
-		"./app/static/" + os.Getenv("TAILWIND_OUTPUT"),
+		"./app/static/"+os.Getenv("TAILWIND_OUTPUT"),
 	)
 
 	if err != nil {
@@ -30,7 +30,6 @@ func main() {
 	if err != nil {
 		panic("Failed to load '.env' file, maybe its missing?")
 	}
-
 
 	args := os.Args[1:]
 	if len(args) == 0 {
@@ -45,11 +44,11 @@ func main() {
 	}
 }
 
-var ACTIONS = map [string] func(args [] string) {
+var ACTIONS = map[string]func(args []string){
 	"watch": Watch,
 }
 
-// this is the response that gets 
+// this is the response that gets
 // printed onto the screen if the
 // user provided invalid launch args
 const ACTIONS_RESPONSE = "<watch>"

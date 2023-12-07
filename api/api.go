@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-var Models map [string] Model = map [string] Model {}
+var Models map[string]Model = map[string]Model{}
 
 func RegisterModel(impl any) error {
 	model, modelName := ModelCreate(impl)
@@ -22,5 +22,5 @@ func GetModel(impl any) (Model, error) {
 	if implModel, ok := Models[implName]; ok {
 		return implModel.CreateFields(impl), nil
 	}
-	return Model {}, fmt.Errorf("model with the name of '%v' does not exist", implName)
+	return Model{}, fmt.Errorf("model with the name of '%v' does not exist", implName)
 }

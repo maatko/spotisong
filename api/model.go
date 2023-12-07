@@ -8,25 +8,25 @@ import (
 )
 
 type ModelFieldProperties struct {
-	MaxLength int
+	MaxLength  int
 	PrimaryKey bool
-	Default string
-	BelongsTo *Model
+	Default    string
+	BelongsTo  *Model
 }
 
 type ModelField struct {
-	Name string
-	Type string
-	Meta reflect.StructField
-	Info reflect.StructTag
-	Value reflect.Value
+	Name       string
+	Type       string
+	Meta       reflect.StructField
+	Info       reflect.StructTag
+	Value      reflect.Value
 	Properties ModelFieldProperties
 }
 
 type Model struct {
-	ID int
-	Name string
-	Fields [] ModelField
+	ID     int
+	Name   string
+	Fields []ModelField
 }
 
 //////////////////////////
@@ -34,22 +34,22 @@ type Model struct {
 // (TODO :: More precise type conversion)
 //////////////////////////
 
-var SQL_TYPES map[string] string = map[string] string  {
-	"bool": 	"BOOLEAN",
-	"string": 	"VARCHAR",
-	"uint8": 	"INTEGER",
-	"uint16": 	"INTEGER",
-	"uint32": 	"INTEGER",
-	"uint64": 	"INTEGER",
-	"int8": 	"INTEGER",
-	"int16": 	"INTEGER",
-	"int32": 	"INTEGER",
-	"int64": 	"INTEGER",
-	"int": 		"INTEGER",
-	"float32": 	"FLOAT",
-	"float64": 	"FLOAT",
-	"float": 	"FLOAT",
-	"Time": 	"TIMESTAMP",
+var SQL_TYPES map[string]string = map[string]string{
+	"bool":    "BOOLEAN",
+	"string":  "VARCHAR",
+	"uint8":   "INTEGER",
+	"uint16":  "INTEGER",
+	"uint32":  "INTEGER",
+	"uint64":  "INTEGER",
+	"int8":    "INTEGER",
+	"int16":   "INTEGER",
+	"int32":   "INTEGER",
+	"int64":   "INTEGER",
+	"int":     "INTEGER",
+	"float32": "FLOAT",
+	"float64": "FLOAT",
+	"float":   "FLOAT",
+	"Time":    "TIMESTAMP",
 }
 
 //////////////////////////
@@ -58,8 +58,8 @@ var SQL_TYPES map[string] string = map[string] string  {
 
 func ModelCreate(impl any) (Model, string) {
 	implName := reflect.TypeOf(impl).Name()
-	return Model {
-		ID: len(Models),
+	return Model{
+		ID:   len(Models),
 		Name: strings.ToLower(implName),
 	}.CreateFields(impl), implName
 }
@@ -71,7 +71,7 @@ func (model Model) CreateFields(impl any) Model {
 	// make sure to create new slice of fields
 	// for the model so it doesn't get appended
 	// to the old slice of fields in the model
-	model.Fields = [] ModelField {}
+	model.Fields = []ModelField{}
 
 	for i := 0; i < implType.NumField(); i++ {
 		fieldType := implType.Field(i)
@@ -87,11 +87,11 @@ func (model Model) CreateFields(impl any) Model {
 			}
 		}
 
-		model.Fields = append(model.Fields, ModelField {
-			Name: strings.ToLower(fieldType.Name),
-			Type: fieldSQLType,
-			Meta: fieldType,
-			Info: fieldType.Tag,
+		model.Fields = append(model.Fields, ModelField{
+			Name:  strings.ToLower(fieldType.Name),
+			Type:  fieldSQLType,
+			Meta:  fieldType,
+			Info:  fieldType.Tag,
 			Value: fieldValue,
 		}.ReadProperties())
 	}
@@ -105,7 +105,7 @@ func (model Model) GetPrimaryField() *ModelField {
 			return &field
 		}
 	}
-	return nil;
+	return nil
 }
 
 //////////////////////////
