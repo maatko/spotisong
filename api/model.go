@@ -36,7 +36,7 @@ type Model struct {
 func ModelCreate(impl any) (Model, string) {
 	implName := reflect.TypeOf(impl).Name()
 	return Model{
-		ID:   len(Models),
+		ID:   len(Project.Models),
 		Name: strings.ToLower(implName),
 	}.CreateFields(impl), implName
 }

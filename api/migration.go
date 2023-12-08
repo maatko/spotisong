@@ -80,7 +80,7 @@ func MigrationCreate(model Model) Migration {
 }
 
 func (migration Migration) QuerySchema() (string, error) {
-	stmt, err := DataBase.Prepare("SELECT sql FROM sqlite_schema WHERE name = ?")
+	stmt, err := Project.DataBase.Prepare("SELECT sql FROM sqlite_schema WHERE name = ?")
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func (migration Migration) QuerySchema() (string, error) {
 }
 
 func (migration Migration) Create() error {
-	_, err := DataBase.Exec(migration.Schema)
+	_, err := Project.DataBase.Exec(migration.Schema)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (migration Migration) Create() error {
 }
 
 func (migration Migration) Drop() error {
-	_, err := DataBase.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v", migration.Table))
+	_, err := Project.DataBase.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v", migration.Table))
 	if err != nil {
 		return err
 	}

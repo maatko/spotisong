@@ -1,8 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 	"spotisong/api"
 	"spotisong/app"
@@ -25,7 +25,7 @@ func MakeMigrations(args []string) error {
 	}
 
 	fmt.Println("> Making migrations...")
-	for _, migration := range api.Migrations {
+	for _, migration := range api.Project.Migrations {
 		file, err := os.Create(migration.GetFile())
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func Migrate(args []string) error {
 	// TODO :: expand the migration system to a more
 	// advanced system where tables are altered not dropped,
 	// and check the default values for columns.
-	for _, migration := range api.Migrations {
+	for _, migration := range api.Project.Migrations {
 		migrationSchema, err := os.ReadFile(migration.GetFile())
 		if err != nil {
 			return err
@@ -90,7 +90,17 @@ func Watch(args []string) error {
 }
 
 func Run(args []string) error {
-	return nil
+	address := fmt.Sprintf(
+		"%s:%s",
+		os.Getenv("HTTP_ADDRESS"),
+		os.Getenv("HTTP_PORT"),
+	)
+
+	fmt.Printf("> HTTP server listening on http://%s", address)
+	return http.ListenAndServe(
+		address,
+		api.Project.Router,
+	)
 }
 
 func main() {
@@ -105,17 +115,16 @@ func main() {
 		return
 	}
 
-	api.DataBase, err = sql.Open("sqlite3", os.Getenv("DATABASE_CONNECTION"))
-	if err != nil {
-		panic(err)
-	}
-
-	api.Project.Setup(
+	err = api.Project.Setup(
 		"./app",
 		os.Getenv("APP_NAME"),
 		os.Getenv("APP_STATIC_DIR"),
 		os.Getenv("APP_MIGRATIONS_DIR"),
 	)
+
+	if err != nil {
+		panic(err)
+	}
 
 	app.Initialize()
 
