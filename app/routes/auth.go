@@ -17,6 +17,7 @@ func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
 		http.StatusOK,
 		"base.html",
 		"auth/base.html",
+		"auth/login.html",
 	)
 }
 
@@ -27,6 +28,7 @@ func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
 		http.StatusOK,
 		"base.html",
 		"auth/base.html",
+		"auth/register.html",
 	)
 }
 

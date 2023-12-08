@@ -1,0 +1,35 @@
+{{ define "title" }}
+    SpotiSong - Login
+{{ end }}
+
+{{ define "auth" }}
+    <h1 class="text-center mt-5 md:mt-0 text-3xl font-bold">Log in to SpotiSong</h1>
+    <hr class="h-px my-8 bg-gray-700 w-3/4 m-auto border-0 dark:bg-gray-700">
+    
+    <form action="/login" method="POST">
+        <div class="w-3/4 m-auto">
+            <label for="username" class="block font-bold text-sm">Username</label>
+            <input type="text" name="username" id="username" placeholder="Username" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
+        </div>
+        <div class="w-3/4 m-auto mt-5">
+            <label for="password" class="block font-bold text-sm">Password</label>
+            <input type="password" name="password" id="password" placeholder="Password" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
+        </div>
+        <div class="w-3/4 m-auto mt-5">
+            <button type="submit" class="w-full rounded-xl p-3 font-bold text-black bg-green-500">Login</button>
+        </div>
+    </form>
+
+    <div class="w-full text-center mt-5">
+        <a href="#" class="underline">Forgot your password?</a>
+    </div>
+    
+    <div class="inline-flex items-center justify-center w-full">
+        <hr class="w-64 h-px my-4 lg:my-8 bg-gray-200 border-0 dark:bg-gray-700">
+        <span class="absolute px-3 font-medium -translate-x-1/2 bg-secondary text-white left-1/2 dark:text-white dark:bg-gray-900">or</span>
+    </div>
+
+    <div class="w-full text-center mt-2 lg:mt-5">
+        Don't have an account? <a href="/register" class="underline">Sign up for SpotiSong</a>
+    </div>
+{{ end }}
