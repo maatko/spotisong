@@ -116,5 +116,5 @@ func (migration Migration) Drop() error {
 }
 
 func (migration Migration) GetFile() string {
-	return fmt.Sprintf("%s/%v-%s.sql", MIGRATIONS_DIRECTORY, migration.ID, migration.Table)
+	return fmt.Sprintf("%s/%v-%s.sql", Project.MigrationsDirectory, migration.ID, migration.Table)
 }

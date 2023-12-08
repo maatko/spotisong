@@ -12,16 +12,16 @@ import (
 )
 
 func MakeMigrations(args []string) error {
-	info, err := os.Stat(api.MIGRATIONS_DIRECTORY)
+	info, err := os.Stat(api.Project.MigrationsDirectory)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(api.MIGRATIONS_DIRECTORY, 0755)
+		err = os.Mkdir(api.Project.MigrationsDirectory, 0755)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("'%v' must be a directory", api.MIGRATIONS_DIRECTORY)
+		return fmt.Errorf("'%v' must be a directory", api.Project.MigrationsDirectory)
 	}
 
 	fmt.Println("> Making migrations...")
@@ -40,13 +40,13 @@ func MakeMigrations(args []string) error {
 }
 
 func Migrate(args []string) error {
-	info, err := os.Stat(api.MIGRATIONS_DIRECTORY)
+	info, err := os.Stat(api.Project.MigrationsDirectory)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("'%v' does not exist, please run `makemigrations` first", api.MIGRATIONS_DIRECTORY)
+		return fmt.Errorf("'%v' does not exist, please run `makemigrations` first", api.Project.MigrationsDirectory)
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("'%v' must be a directory", api.MIGRATIONS_DIRECTORY)
+		return fmt.Errorf("'%v' must be a directory", api.Project.MigrationsDirectory)
 	}
 
 	// TODO :: expand the migration system to a more
@@ -84,9 +84,13 @@ func Watch(args []string) error {
 	}
 
 	return tailwind.Watch(
-		"./app/style.css",
-		"./app/static/css/"+os.Getenv("TAILWIND_OUTPUT"),
+		api.Project.Src("style.css"),
+		api.Project.Static("css/%s", os.Getenv("TAILWIND_OUTPUT")),
 	)
+}
+
+func Run(args []string) error {
+	return nil
 }
 
 func main() {
@@ -106,6 +110,13 @@ func main() {
 		panic(err)
 	}
 
+	api.Project.Setup(
+		"./app",
+		os.Getenv("APP_NAME"),
+		os.Getenv("APP_STATIC_DIR"),
+		os.Getenv("APP_MIGRATIONS_DIR"),
+	)
+
 	app.Initialize()
 
 	if action, ok := ACTIONS[strings.ToLower(os.Args[1])]; ok {
@@ -122,9 +133,10 @@ var ACTIONS = map[string]func(args []string) error{
 	"makemigrations": MakeMigrations,
 	"migrate":        Migrate,
 	"watch":          Watch,
+	"run":            Run,
 }
 
 // this is the response that gets
 // printed onto the screen if the
 // user provided invalid launch args
-const ACTIONS_RESPONSE = "<makemigrations/migrate/watch>"
+const ACTIONS_RESPONSE = "<makemigrations/migrate/watch/run>"

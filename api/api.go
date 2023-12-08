@@ -6,11 +6,32 @@ import (
 	"reflect"
 )
 
+type ProjectInformation struct {
+	Name                string
+	Directory           string
+	StaticDirectory     string
+	MigrationsDirectory string
+}
+
 var DataBase *sql.DB
 var Models map[string]Model = map[string]Model{}
 var Migrations map[string]Migration = map[string]Migration{}
+var Project = ProjectInformation{}
 
-const MIGRATIONS_DIRECTORY = "./app/migrations"
+func (project *ProjectInformation) Setup(directory string, name string, static string, migrations string) {
+	project.Name = name
+	project.Directory = directory
+	project.StaticDirectory = fmt.Sprintf("%s/%s", directory, static)
+	project.MigrationsDirectory = fmt.Sprintf("%s/%s", directory, migrations)
+}
+
+func (project *ProjectInformation) Src(path string, args ...any) string {
+	return project.Directory + "/" + fmt.Sprintf(path, args...)
+}
+
+func (project *ProjectInformation) Static(path string, args ...any) string {
+	return project.StaticDirectory + "/" + fmt.Sprintf(path, args...)
+}
 
 func RegisterModel(impl any) error {
 	model, modelName := ModelCreate(impl)
