@@ -80,10 +80,10 @@ func (project *ProjectInformation) Setup(directory string, name string, static s
 	return nil
 }
 
-func (project *ProjectInformation) Src(path string, args ...any) string {
+func (project ProjectInformation) Src(path string, args ...any) string {
 	return project.Directory + "/" + fmt.Sprintf(path, args...)
 }
 
-func (project *ProjectInformation) Static(path string, args ...any) string {
+func (project ProjectInformation) Static(path string, args ...any) string {
 	return project.StaticDirectory + "/" + fmt.Sprintf(path, args...)
 }

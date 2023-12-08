@@ -4,7 +4,7 @@ module.exports = {
     darkMode: 'class',
     mode: "jit",
     content: [
-        "./app/templates/**/*.html"
+        "./app/**/*.{html,js}",
     ],
     theme: {
         extend: {},

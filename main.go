@@ -96,6 +96,8 @@ func Run(args []string) error {
 		os.Getenv("HTTP_PORT"),
 	)
 
+	api.Project.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./app/static/"))))
+
 	fmt.Printf("> HTTP server listening on http://%s", address)
 	return http.ListenAndServe(
 		address,
