@@ -52,7 +52,14 @@ func MigrationCreate(model Model) Migration {
 		if field.Properties.PrimaryKey {
 			schema.WriteString(" PRIMARY KEY AUTOINCREMENT")
 		} else if field.Properties.BelongsTo != nil {
-			schema.WriteString(fmt.Sprintf(" REFERENCES %v", field.Properties.BelongsTo.Name))
+			belongsTo := field.Properties.BelongsTo
+
+			belongsToID := field.Properties.BelongsTo.GetPrimaryField()
+			if belongsToID == nil {
+				panic(fmt.Errorf("Model '%v' belongs to '%v' but doesn't have a primary key", model.Name, belongsTo.Name))
+			}
+
+			schema.WriteString(fmt.Sprintf(" REFERENCES %v(%v)", belongsTo.Name, belongsToID.Name))
 		}
 
 		if len(field.Properties.Default) > 0 {
