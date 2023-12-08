@@ -85,7 +85,7 @@ func Watch(args []string) error {
 
 	return tailwind.Watch(
 		"./app/style.css",
-		"./app/static/"+os.Getenv("TAILWIND_OUTPUT"),
+		"./app/static/css/"+os.Getenv("TAILWIND_OUTPUT"),
 	)
 }
 
