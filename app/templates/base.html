@@ -8,16 +8,13 @@
     <!-- styles -->
     <link rel="stylesheet" href="static/css/global.css">
 </head>
-    <body>
-        <div class="grid w-screen h-screen">
-            <div class="place-self-center ">
-                <h1 class="text-center font-bold text-lg p-10">SpotiSong</h1>
-                <strong class="uppercase">Under development</strong>
-            </div>
-        </div>
+    <body class="w-screen h-screen">
+        <!-- main page content -->
+        {{ template "content" }}
 
         <!-- js -->
         <script src="static/js/alpine.min.js" defer></script>
         <script src="static/js/htmx.min.js"></script>
     </body>
 </html>
+

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"spotisong/api"
 
 	"github.com/gorilla/mux"
 )
@@ -10,13 +11,23 @@ type Auth struct {
 }
 
 func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
-	response.WriteHeader(http.StatusOK)
-	response.Write([]byte("Login page!"))
+	api.RenderTemplate(
+		response,
+		auth,
+		http.StatusOK,
+		"base.html",
+		"auth/base.html",
+	)
 }
 
 func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
-	response.WriteHeader(http.StatusOK)
-	response.Write([]byte("Register page!"))
+	api.RenderTemplate(
+		response,
+		auth,
+		http.StatusOK,
+		"base.html",
+		"auth/base.html",
+	)
 }
 
 func (auth Auth) SetupRoutes(router *mux.Router) {

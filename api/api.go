@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"io"
+	"net/http"
 	"os"
 	"reflect"
 
@@ -35,7 +35,7 @@ func RegisterRoute(path string, route RouteHandler) {
 	route.SetupRoutes(router)
 }
 
-func RenderTemplate(writer io.Writer, data any, paths ...string) error {
+func RenderTemplate(response http.ResponseWriter, data any, statusCode int, paths ...string) error {
 	var templates []string
 
 	for _, path := range paths {
@@ -47,7 +47,8 @@ func RenderTemplate(writer io.Writer, data any, paths ...string) error {
 		return err
 	}
 
-	return tmpl.Execute(writer, data)
+	response.WriteHeader(statusCode)
+	return tmpl.Execute(response, data)
 }
 
 func RegisterModel(impl any) error {

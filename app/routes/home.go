@@ -8,15 +8,10 @@ import (
 )
 
 type Home struct {
-	Project api.ProjectInformation
 }
 
 func (home Home) Index(response http.ResponseWriter, request *http.Request) {
-	response.WriteHeader(http.StatusOK)
-
-	home.Project = api.Project
-
-	api.RenderTemplate(response, home, "base.html")
+	api.RenderTemplate(response, home, http.StatusOK, "base.html", "index.html")
 }
 
 func (home Home) SetupRoutes(router *mux.Router) {
