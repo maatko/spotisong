@@ -1,3 +1,4 @@
 .env
 .tailwind
 *.sqlite3
+spotisong

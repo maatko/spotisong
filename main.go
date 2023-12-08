@@ -107,7 +107,7 @@ func Run(args []string) error {
 		os.Getenv("HTTP_PORT"),
 	)
 
-	api.Project.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./app/static/"))))
+	api.Project.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./app/resources/"))))
 
 	fmt.Printf("> HTTP server listening on http://%s\n", address)
 	return http.ListenAndServe(
@@ -131,7 +131,7 @@ func main() {
 	err = api.Project.Setup(
 		"./app",
 		os.Getenv("APP_NAME"),
-		os.Getenv("APP_STATIC_DIR"),
+		os.Getenv("API_RESOURCES_DIR"),
 		"templates",
 		os.Getenv("APP_MIGRATIONS_DIR"),
 	)
