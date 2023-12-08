@@ -32,7 +32,7 @@ func MakeMigrations(args []string) error {
 		}
 		defer file.Close()
 
-		fmt.Printf("> ")
+		fmt.Printf("> table: %s\n", migration.Table)
 		file.WriteString(migration.Schema)
 	}
 

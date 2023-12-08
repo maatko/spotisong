@@ -56,7 +56,7 @@ func MigrationCreate(model Model) Migration {
 		}
 
 		if len(field.Properties.Default) > 0 {
-			schema.WriteString(fmt.Sprintf("DEFAULT %v", field.Properties.Default))
+			schema.WriteString(fmt.Sprintf(" DEFAULT %v", field.Properties.Default))
 		}
 
 		if idx < len(model.Fields)-1 {

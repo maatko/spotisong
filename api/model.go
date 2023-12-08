@@ -54,14 +54,14 @@ func (model Model) CreateFields(impl any) Model {
 		fieldType := implType.Field(i)
 		fieldValue := implValue.Field(i)
 
+		typeName := fieldType.Type.Kind().String()
+		if fieldType.Type.Kind() == reflect.Struct {
+			typeName = reflect.TypeOf(fieldValue.Interface()).Name()
+		}
+
 		fieldSQLType := "INTEGER"
-		if fieldType.Type.Kind() != reflect.Struct {
-			typeName := fieldType.Type.Kind().String()
-			if sqlType, ok := SQL_TYPES[typeName]; ok {
-				fieldSQLType = sqlType
-			} else {
-				panic(fmt.Sprintf("Type '%v' in '%v' does not have a SQL type", typeName, implType.Name()))
-			}
+		if sqlType, ok := SQL_TYPES[typeName]; ok {
+			fieldSQLType = sqlType
 		}
 
 		model.Fields = append(model.Fields, ModelField{
