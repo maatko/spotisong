@@ -78,15 +78,26 @@ func Migrate(args []string) error {
 }
 
 func Watch(args []string) error {
-	tailwind := api.TailWind{
-		Version: os.Getenv("TAILWIND_VERSION"),
-		Binary:  "./.tailwind/",
+	tailwind, err := api.NewTailWind(
+		os.Getenv("TAILWIND_VERSION"),
+		"./.tailwind",
+	)
+
+	if err != nil {
+		return err
 	}
 
-	return tailwind.Watch(
+	process, err := tailwind.Watch(
 		api.Project.Src("style.css"),
 		api.Project.Static("css/%s", os.Getenv("TAILWIND_OUTPUT")),
 	)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("[*] TailWindCSS exited [Exit Code: %v]\n", process.ExitCode())
+	return nil
 }
 
 func Run(args []string) error {

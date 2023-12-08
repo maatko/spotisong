@@ -13,120 +13,151 @@ import (
 
 type TailWind struct {
 	Version     string
+	DownloadURL string
 	Binary      string
 	ProgressBar *pb.ProgressBar
 }
 
-func (tailwind *TailWind) Watch(input string, output string) error {
-	tailwind.Setup()
+// Initializes a new instance of the `TailWind` structure.
+//
+// Parameters:
+// > `version` - version of TailWindCSS
+// > `cache` - directory that the TailWindCSS binary will be stored in
+func NewTailWind(version string, cache string) (TailWind, error) {
+	osName := runtime.GOOS
+	osArch := runtime.GOARCH
 
-	attrs := os.ProcAttr{
+	if osArch == "amd64" {
+		osArch = "x64"
+	} else {
+		osArch = "arm64"
+	}
+
+	return TailWind{
+		Version:     version,
+		Binary:      cache,
+		DownloadURL: "https://github.com/tailwindlabs/tailwindcss/releases/download/%s/tailwindcss-%s-%s",
+	}.Setup(osName, osArch)
+}
+
+// Sets up the TailWindCSS enviornment
+//
+// Parameters:
+// > `system` - name of the current operating system
+// > `arch` - architecture of the current operating system
+func (tailWind TailWind) Setup(system string, arch string) (TailWind, error) {
+	// makes sure that the directory
+	// that will hold the tailwind binary exists
+	_, err := os.Stat(tailWind.Binary)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(tailWind.Binary, 0755)
+		if err != nil {
+			return tailWind, err
+		}
+	}
+
+	tailWind.Binary = tailWind.Executable("%s/%s", tailWind.Binary, "tailwind")
+
+	// if the binary exists there is no need
+	// to proceed with the setup
+	_, err = os.Stat(tailWind.Binary)
+	if !os.IsNotExist(err) {
+		return tailWind, nil
+	}
+
+	fmt.Println("[*] Downloading TailWindCSS")
+	return tailWind.Download(system, arch)
+}
+
+// Starts watching for changes in the files that were
+// provided in the `tailwind.config.js` file and auto
+// regenerates the `output` css stylesheet based on the
+// provided `input` stylesheet
+//
+// Parameters:
+// > `input` - input style sheet file
+// > `arch` - output style sheet file
+func (tailWind *TailWind) Watch(input string, output string) (*os.ProcessState, error) {
+	process, err := os.StartProcess(tailWind.Binary, []string{
+		tailWind.Binary,
+		"-i", input,
+		"-o", output,
+		"--watch",
+	}, &os.ProcAttr{
 		Files: []*os.File{
 			os.Stdin,
 			os.Stdout,
 			os.Stderr,
 		},
-	}
-
-	process, err := os.StartProcess(tailwind.Binary, []string{
-		tailwind.Binary,
-		"-i", input,
-		"-o", output,
-		"--watch",
-	}, &attrs)
+	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	state, err := process.Wait()
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Process exited with status %v\n", state.ExitCode())
-	return nil
+	return process.Wait()
 }
 
-func (tailwind *TailWind) Setup() {
-	// makes sure that the directory
-	// that will hold the tailwind binary exists
-	_, err := os.Stat(tailwind.Binary)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(tailwind.Binary, 0755)
-		if err != nil {
-			panic(err)
-		}
+// Downloads the TailWindCSS binary
+//
+// Parameters:
+// > `system` - name of the current operating system
+// > `arch` - architecture of the current operating system
+func (tailWind TailWind) Download(system string, arch string) (TailWind, error) {
+	file, err := os.Create(tailWind.Binary)
+	if err != nil {
+		return tailWind, err
 	}
 
-	if strings.ToLower(runtime.GOOS) == "windows" {
-		tailwind.Binary += "tailwind.exe"
-	} else {
-		tailwind.Binary += "tailwind"
-	}
-
-	// if the tailwind binary file exists
-	// there is no need to re-download it
-	_, err = os.Stat(tailwind.Binary)
-	if !os.IsNotExist(err) {
-		return
-	}
-
-	var arch string
-	if runtime.GOARCH == "amd64" {
-		arch = "x64"
-	} else {
-		arch = "arm64"
-	}
-
-	downloadURL := fmt.Sprintf(
-		TAILWIND_DOWNLOAD_URL,
-		tailwind.Version,
-		strings.ToLower(runtime.GOOS),
+	response, err := http.Get(tailWind.Executable(
+		tailWind.DownloadURL,
+		tailWind.Version,
+		system,
 		arch,
-	)
+	))
 
-	if strings.ToLower(runtime.GOOS) == "windows" {
-		downloadURL += ".exe"
-	}
-
-	err = tailwind.Download(downloadURL)
 	if err != nil {
-		panic(err)
+		file.Close()
+		os.Remove(tailWind.Binary)
+		return tailWind, err
 	}
-}
 
-func (tailwind *TailWind) Download(url string) error {
-	fmt.Println("> Downloading TailwindCSS")
+	tailWind.ProgressBar = pb.Full.Start64(response.ContentLength)
 
-	response, err := http.Get(url)
-	if err != nil {
-		return err
-	}
 	defer response.Body.Close()
+	defer tailWind.ProgressBar.Finish()
 
-	file, err := os.Create(tailwind.Binary)
+	_, err = io.Copy(io.MultiWriter(file, &tailWind), response.Body)
 	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	tailwind.ProgressBar = pb.Full.Start64(response.ContentLength)
-	defer tailwind.ProgressBar.Finish()
-
-	writer := io.MultiWriter(file, tailwind)
-	_, err = io.Copy(writer, response.Body)
-	if err != nil {
-		return err
+		return tailWind, err
 	}
 
-	os.Chmod(tailwind.Binary, 0755)
-	return nil
+	file.Close()
+	return tailWind, os.Chmod(tailWind.Binary, 0755)
 }
 
-func (tailwind *TailWind) Write(p []byte) (int, error) {
-	tailwind.ProgressBar.Add(len(p))
-	return len(p), nil
+// Takes the `binary` path combines it with the arguments
+// and returns the executable path based on the current
+// operating system (printf style function)
+//
+// Parameters:
+// > `binary` - path to the binary file
+// > `args` - any formatting arguments
+func (tailWind TailWind) Executable(binary string, args ...any) string {
+	path := fmt.Sprintf(binary, args...)
+	if strings.ToLower(runtime.GOOS) == "windows" {
+		return path + ".exe"
+	}
+	return path
 }
 
-const TAILWIND_DOWNLOAD_URL = "https://github.com/tailwindlabs/tailwindcss/releases/download/%s/tailwindcss-%s-%s"
+// Used for updating the progress bar when
+// download the TailWindCSS binary file
+//
+// Parameters:
+// > `bytes` - how many bytes are being written to the file
+
+func (tailwind *TailWind) Write(bytes []byte) (int, error) {
+	tailwind.ProgressBar.Add(len(bytes))
+	return len(bytes), nil
+}
