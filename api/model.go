@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -76,6 +77,95 @@ func (model Model) CreateFields(impl any) Model {
 	return model
 }
 
+func (model Model) Insert() (int64, error) {
+	var query strings.Builder
+	var values []any
+
+	query.WriteString(fmt.Sprintf("INSERT INTO %v (", model.Name))
+
+	fieldLen := len(model.Fields)
+	for idx, field := range model.Fields {
+		if field.Properties.PrimaryKey || len(field.Properties.Default) > 0 {
+			fieldLen--
+			continue
+		}
+
+		query.WriteString(field.Name)
+
+		values = append(values, field.GetValue())
+
+		if idx < fieldLen-1 {
+			query.WriteString(", ")
+		}
+	}
+	query.WriteString(") VALUES (")
+
+	valuesLen := len(values)
+	for i := 0; i < valuesLen; i++ {
+		query.WriteString("?")
+
+		if i < valuesLen-1 {
+			query.WriteString(", ")
+		}
+	}
+	query.WriteString(")")
+
+	stmt, err := Project.DataBase.Prepare(query.String())
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(values...)
+	if err != nil {
+		return 0, err
+	}
+
+	insertedID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedID, nil
+}
+
+func (model Model) Fetch(impl any, keys ...string) (*sql.Rows, error) {
+	var query strings.Builder
+
+	query.WriteString(fmt.Sprintf("SELECT * FROM %v WHERE ", model.Name))
+
+	for idx, key := range keys {
+		query.WriteString(fmt.Sprintf("%v = ?", key))
+
+		if idx < len(keys)-1 {
+			query.WriteString(" AND ")
+		}
+	}
+
+	var values []any
+	for _, key := range keys {
+		for _, field := range model.Fields {
+			if field.Name == key {
+				values = append(values, field.GetValue())
+				break
+			}
+		}
+	}
+
+	stmt, err := Project.DataBase.Prepare(query.String())
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(values...)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
 func (model Model) GetPrimaryField() *ModelField {
 	for _, field := range model.Fields {
 		if field.Properties.PrimaryKey {
@@ -88,6 +178,26 @@ func (model Model) GetPrimaryField() *ModelField {
 //////////////////////////
 // ModelField
 //////////////////////////
+
+func (field ModelField) GetValue() any {
+	if field.Properties.BelongsTo != nil {
+		primaryField := field.Properties.BelongsTo.GetPrimaryField()
+		if primaryField == nil {
+			return nil
+		}
+		return primaryField.GetValue()
+	} else {
+		if field.Value.CanInt() {
+			return field.Value.Int()
+		} else if field.Value.CanFloat() {
+			return field.Value.Float()
+		} else if field.Meta.Type.Kind() == reflect.Bool {
+			return field.Value.Bool()
+		} else {
+			return field.Value.String()
+		}
+	}
+}
 
 func (field ModelField) ReadProperties() ModelField {
 	properties := &field.Properties
