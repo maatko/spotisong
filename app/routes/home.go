@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"html/template"
 	"net/http"
 	"spotisong/api"
 
@@ -17,8 +16,7 @@ func (home Home) Index(response http.ResponseWriter, request *http.Request) {
 
 	home.Project = api.Project
 
-	tmpl := template.Must(template.ParseFiles("./app/templates/base.html"))
-	tmpl.Execute(response, home)
+	api.RenderTemplate(response, home, "base.html")
 }
 
 func (home Home) SetupRoutes(router *mux.Router) {

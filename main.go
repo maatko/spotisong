@@ -121,6 +121,7 @@ func main() {
 		"./app",
 		os.Getenv("APP_NAME"),
 		os.Getenv("APP_STATIC_DIR"),
+		"templates",
 		os.Getenv("APP_MIGRATIONS_DIR"),
 	)
 

@@ -3,6 +3,8 @@ package api
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
+	"io"
 	"os"
 	"reflect"
 
@@ -13,6 +15,7 @@ type ProjectInformation struct {
 	Name                string
 	Directory           string
 	StaticDirectory     string
+	TemplatesDirectory  string
 	MigrationsDirectory string
 	DataBase            *sql.DB
 	Models              map[string]Model
@@ -30,6 +33,21 @@ func RegisterRoute(path string, route RouteHandler) {
 	}
 
 	route.SetupRoutes(router)
+}
+
+func RenderTemplate(writer io.Writer, data any, paths ...string) error {
+	var templates []string
+
+	for _, path := range paths {
+		templates = append(templates, Project.Template(path))
+	}
+
+	tmpl, err := template.ParseFiles(templates...)
+	if err != nil {
+		return err
+	}
+
+	return tmpl.Execute(writer, data)
 }
 
 func RegisterModel(impl any) error {
@@ -58,10 +76,11 @@ func GetModel(impl any) (Model, error) {
 
 var Project = ProjectInformation{}
 
-func (project *ProjectInformation) Setup(directory string, name string, static string, migrations string) error {
+func (project *ProjectInformation) Setup(directory string, name string, static string, templates string, migrations string) error {
 	project.Name = name
 	project.Directory = directory
 	project.StaticDirectory = fmt.Sprintf("%s/%s", directory, static)
+	project.TemplatesDirectory = fmt.Sprintf("%s/%s", directory, templates)
 	project.MigrationsDirectory = fmt.Sprintf("%s/%s", directory, migrations)
 
 	project.Models = map[string]Model{}
@@ -86,4 +105,8 @@ func (project ProjectInformation) Src(path string, args ...any) string {
 
 func (project ProjectInformation) Static(path string, args ...any) string {
 	return project.StaticDirectory + "/" + fmt.Sprintf(path, args...)
+}
+
+func (project ProjectInformation) Template(path string, args ...any) string {
+	return project.TemplatesDirectory + "/" + fmt.Sprintf(path, args...)
 }
