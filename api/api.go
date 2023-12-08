@@ -1,11 +1,16 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"reflect"
 )
 
+var DataBase *sql.DB
 var Models map[string]Model = map[string]Model{}
+var Migrations map[string]Migration = map[string]Migration{}
+
+const MIGRATIONS_DIRECTORY = "./app/migrations"
 
 func RegisterModel(impl any) error {
 	model, modelName := ModelCreate(impl)
@@ -13,6 +18,12 @@ func RegisterModel(impl any) error {
 		return fmt.Errorf("'%s' model already exists", modelName)
 	}
 
+	migration := MigrationCreate(model)
+	if _, ok := Migrations[modelName]; ok {
+		return fmt.Errorf("'%s' migration already exists", modelName)
+	}
+
+	Migrations[modelName] = migration
 	Models[modelName] = model
 	return nil
 }

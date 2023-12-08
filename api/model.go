@@ -30,29 +30,6 @@ type Model struct {
 }
 
 //////////////////////////
-// Type Conversion
-// (TODO :: More precise type conversion)
-//////////////////////////
-
-var SQL_TYPES map[string]string = map[string]string{
-	"bool":    "BOOLEAN",
-	"string":  "VARCHAR",
-	"uint8":   "INTEGER",
-	"uint16":  "INTEGER",
-	"uint32":  "INTEGER",
-	"uint64":  "INTEGER",
-	"int8":    "INTEGER",
-	"int16":   "INTEGER",
-	"int32":   "INTEGER",
-	"int64":   "INTEGER",
-	"int":     "INTEGER",
-	"float32": "FLOAT",
-	"float64": "FLOAT",
-	"float":   "FLOAT",
-	"Time":    "TIMESTAMP",
-}
-
-//////////////////////////
 // Model
 //////////////////////////
 
