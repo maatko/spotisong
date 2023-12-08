@@ -11,6 +11,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type Message struct {
+	Text  string
+	Error bool
+}
+
 type ProjectInformation struct {
 	Name                string
 	Directory           string
@@ -21,6 +26,14 @@ type ProjectInformation struct {
 	Models              map[string]Model
 	Migrations          map[string]Migration
 	Router              *mux.Router
+	Messages            []Message
+}
+
+func ShowMessage(text string, error bool) {
+	Project.Messages = append(Project.Messages, Message{
+		Text:  text,
+		Error: error,
+	})
 }
 
 func RegisterRoute(path string, route RouteHandler) {
@@ -48,7 +61,13 @@ func RenderTemplate(response http.ResponseWriter, data any, statusCode int, path
 	}
 
 	response.WriteHeader(statusCode)
-	return tmpl.Execute(response, data)
+
+	err = tmpl.Execute(response, data)
+
+	clear(Project.Messages)
+	Project.Messages = []Message{}
+
+	return err
 }
 
 func RegisterModel(impl any) error {
@@ -86,6 +105,7 @@ func (project *ProjectInformation) Setup(directory string, name string, static s
 
 	project.Models = map[string]Model{}
 	project.Migrations = map[string]Migration{}
+	project.Messages = []Message{}
 
 	var err error
 

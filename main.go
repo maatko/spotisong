@@ -98,7 +98,7 @@ func Run(args []string) error {
 
 	api.Project.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./app/static/"))))
 
-	fmt.Printf("> HTTP server listening on http://%s", address)
+	fmt.Printf("> HTTP server listening on http://%s\n", address)
 	return http.ListenAndServe(
 		address,
 		api.Project.Router,

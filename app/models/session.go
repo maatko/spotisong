@@ -12,21 +12,6 @@ type Session struct {
 	ExpiresAt time.Time
 }
 
-func (session *Session) Save() error {
-	model, err := api.GetModel(*session)
-	if err != nil {
-		return err
-	}
-
-	id, err := model.Insert()
-	if err != nil {
-		return err
-	}
-
-	session.ID = int(id)
-	return session.Fetch("id")
-}
-
 func (session *Session) Fetch(keys ...string) error {
 	model, err := api.GetModel(*session)
 	if err != nil {
@@ -49,4 +34,19 @@ func (session *Session) Fetch(keys ...string) error {
 
 	rows.Close()
 	return session.User.Fetch("id")
+}
+
+func (session *Session) Save() error {
+	model, err := api.GetModel(*session)
+	if err != nil {
+		return err
+	}
+
+	id, err := model.Insert()
+	if err != nil {
+		return err
+	}
+
+	session.ID = int(id)
+	return session.Fetch("id")
 }
