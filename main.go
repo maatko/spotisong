@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"spotisong/api"
 	"spotisong/app"
@@ -12,20 +11,10 @@ import (
 )
 
 func MakeMigrations(args []string) error {
-	info, err := os.Stat(api.Project.MigrationsDirectory)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(api.Project.MigrationsDirectory, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !info.IsDir() {
-		return fmt.Errorf("'%v' must be a directory", api.Project.MigrationsDirectory)
-	}
+	// TODO :: check for migrations directory
 
 	fmt.Println("> Making migrations...")
-	for _, migration := range api.Project.Migrations {
+	for _, migration := range api.AppMigrations {
 		file, err := os.Create(migration.GetFile())
 		if err != nil {
 			return err
@@ -40,19 +29,12 @@ func MakeMigrations(args []string) error {
 }
 
 func Migrate(args []string) error {
-	info, err := os.Stat(api.Project.MigrationsDirectory)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("'%v' does not exist, please run `makemigrations` first", api.Project.MigrationsDirectory)
-	}
-
-	if !info.IsDir() {
-		return fmt.Errorf("'%v' must be a directory", api.Project.MigrationsDirectory)
-	}
+	// TODO :: Check if the migrations directory exists
 
 	// TODO :: expand the migration system to a more
 	// advanced system where tables are altered not dropped,
 	// and check the default values for columns.
-	for _, migration := range api.Project.Migrations {
+	for _, migration := range api.AppMigrations {
 		migrationSchema, err := os.ReadFile(migration.GetFile())
 		if err != nil {
 			return err
@@ -88,8 +70,8 @@ func Watch(args []string) error {
 	}
 
 	process, err := tailwind.Watch(
-		api.Project.Src("style.css"),
-		api.Project.Static("css/%s", os.Getenv("TAILWIND_OUTPUT")),
+		api.GetSource("style.css"),
+		api.GetResource("css/%s", os.Getenv("TAILWIND_OUTPUT")),
 	)
 
 	if err != nil {
@@ -101,19 +83,7 @@ func Watch(args []string) error {
 }
 
 func Run(args []string) error {
-	address := fmt.Sprintf(
-		"%s:%s",
-		os.Getenv("HTTP_ADDRESS"),
-		os.Getenv("HTTP_PORT"),
-	)
-
-	api.Project.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./app/resources/"))))
-
-	fmt.Printf("> HTTP server listening on http://%s\n", address)
-	return http.ListenAndServe(
-		address,
-		api.Project.Router,
-	)
+	return api.Server.Start()
 }
 
 func main() {
@@ -128,19 +98,15 @@ func main() {
 		return
 	}
 
-	err = api.Project.Setup(
-		"./app",
-		os.Getenv("APP_NAME"),
-		os.Getenv("API_RESOURCES_DIR"),
-		"templates",
-		os.Getenv("APP_MIGRATIONS_DIR"),
-	)
-
+	err = api.InitializeApp(app.RegisterAppModels)
 	if err != nil {
 		panic(err)
 	}
 
-	app.Initialize()
+	err = api.Server.Initialize(app.RegisterAppRoutes)
+	if err != nil {
+		panic(err)
+	}
 
 	if action, ok := ACTIONS[strings.ToLower(os.Args[1])]; ok {
 		err = action(args[1:])

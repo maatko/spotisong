@@ -6,7 +6,7 @@
     <h1 class="text-center mt-5 md:mt-0 text-3xl font-bold">Sign up for SpotiSong</h1>
     <hr class="h-px my-8 bg-gray-700 w-3/4 m-auto border-0 dark:bg-gray-700">
 
-    <form action="/register" method="POST">
+    <form action="/auth/register" method="POST">
         <div class="w-3/4 m-auto">
             <label for="email" class="block font-bold text-sm">Email</label>
             <input type="email" name="email" id="email" placeholder="Email" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
@@ -34,6 +34,6 @@
     </div>
 
     <div class="w-full text-center mt-2 lg:mt-5">
-        Already have an account? <a href="/login" class="underline">Log into SpotiSong</a>
+        Already have an account? <a href="/auth/login" class="underline">Log into SpotiSong</a>
     </div>
 {{end}}

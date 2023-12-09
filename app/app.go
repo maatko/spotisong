@@ -4,20 +4,18 @@ import (
 	"spotisong/api"
 	"spotisong/app/models"
 	"spotisong/app/routes"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
-func Initialize() {
-	///////////////////////////////
+func RegisterAppModels() api.ModelImplementations {
+	return api.ModelImplementations{
+		models.User{},
+		models.Session{},
+	}
+}
 
-	api.RegisterModel(models.User{})
-	api.RegisterModel(models.Session{})
-
-	///////////////////////////////
-
-	api.RegisterRoute("/", routes.Home{})
-	api.RegisterRoute("/", routes.Auth{})
-
-	///////////////////////////////
+func RegisterAppRoutes() api.HttpRoutes {
+	return api.HttpRoutes{
+		"/":     routes.Home{},
+		"/auth": routes.Auth{},
+	}
 }

@@ -34,7 +34,7 @@ var SQL_TYPES map[string]string = map[string]string{
 	"Time":    "DATETIME",
 }
 
-func MigrationCreate(model Model) Migration {
+func NewMigration(model Model) Migration {
 	var schema strings.Builder
 
 	schema.WriteString("CREATE TABLE ")
@@ -80,7 +80,7 @@ func MigrationCreate(model Model) Migration {
 }
 
 func (migration Migration) QuerySchema() (string, error) {
-	stmt, err := Project.DataBase.Prepare("SELECT sql FROM sqlite_schema WHERE name = ?")
+	stmt, err := Server.DataBase.Prepare("SELECT sql FROM sqlite_schema WHERE name = ?")
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func (migration Migration) QuerySchema() (string, error) {
 }
 
 func (migration Migration) Create() error {
-	_, err := Project.DataBase.Exec(migration.Schema)
+	_, err := Server.DataBase.Exec(migration.Schema)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (migration Migration) Create() error {
 }
 
 func (migration Migration) Drop() error {
-	_, err := Project.DataBase.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v", migration.Table))
+	_, err := Server.DataBase.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %v", migration.Table))
 	if err != nil {
 		return err
 	}
@@ -116,5 +116,5 @@ func (migration Migration) Drop() error {
 }
 
 func (migration Migration) GetFile() string {
-	return fmt.Sprintf("%s/%v-%s.sql", Project.MigrationsDirectory, migration.ID, migration.Table)
+	return GetMigration("%v-%s.sql", migration.ID, migration.Table)
 }

@@ -30,16 +30,17 @@ type Model struct {
 	Fields []ModelField
 }
 
+type ModelImplementations []any
+
 //////////////////////////
 // Model
 //////////////////////////
 
-func ModelCreate(impl any) (Model, string) {
-	implName := reflect.TypeOf(impl).Name()
+func NewModel(impl any) Model {
 	return Model{
-		ID:   len(Project.Models),
-		Name: strings.ToLower(implName),
-	}.CreateFields(impl), implName
+		ID:   len(AppModels),
+		Name: strings.ToLower(reflect.TypeOf(impl).Name()),
+	}.CreateFields(impl)
 }
 
 func (model Model) CreateFields(impl any) Model {
@@ -110,7 +111,7 @@ func (model Model) Insert() (int64, error) {
 	}
 	query.WriteString(")")
 
-	stmt, err := Project.DataBase.Prepare(query.String())
+	stmt, err := Server.DataBase.Prepare(query.String())
 	if err != nil {
 		return 0, err
 	}
@@ -152,7 +153,7 @@ func (model Model) Fetch(impl any, keys ...string) (*sql.Rows, error) {
 		}
 	}
 
-	stmt, err := Project.DataBase.Prepare(query.String())
+	stmt, err := Server.DataBase.Prepare(query.String())
 	if err != nil {
 		return nil, err
 	}

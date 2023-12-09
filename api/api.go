@@ -1,58 +1,57 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"reflect"
-
-	"github.com/gorilla/mux"
+	"strconv"
+	"text/template"
 )
 
-type Message struct {
-	Text  string
-	Error bool
+var AppName string
+var AppVersion string
+var AppDebug bool
+
+// Used for communication with the database,
+// migrations are automatically created with the model
+var AppModels map[string]Model = map[string]Model{}
+var AppMigrations map[string]Migration = map[string]Migration{}
+
+// Stores paths to all directories
+// that might need to be queried runtime
+var AppDirectories map[string]string = map[string]string{
+	"sources":    "./app/",
+	"resources":  "./app/resources",
+	"migrations": "./app/migrations",
+	"templates":  "./app/templates",
 }
 
-type ProjectInformation struct {
-	Name                string
-	Directory           string
-	StaticDirectory     string
-	TemplatesDirectory  string
-	MigrationsDirectory string
-	DataBase            *sql.DB
-	Models              map[string]Model
-	Migrations          map[string]Migration
-	Router              *mux.Router
-	Messages            []Message
-}
+func InitializeApp(registerModels func() ModelImplementations) error {
+	AppName = os.Getenv("APP_NAME")
+	AppVersion = os.Getenv("APP_VERSION")
 
-func ShowMessage(text string, error bool) {
-	Project.Messages = append(Project.Messages, Message{
-		Text:  text,
-		Error: error,
-	})
-}
-
-func RegisterRoute(path string, route RouteHandler) {
-	router := Project.Router
-	if !(path == "/" || len(path) == 0) {
-		router = mux.NewRouter()
-		router.StrictSlash(true)
-
-		Project.Router.Handle(path, router)
+	debug, err := strconv.ParseBool(os.Getenv("APP_DEBUG"))
+	if err != nil {
+		return fmt.Errorf("`APP_DEBUG` has an invalid value `%v` needs to be a boolean", debug)
 	}
 
-	route.SetupRoutes(router)
+	for _, impl := range registerModels() {
+		err = RegisterModel(impl)
+		if err != nil {
+			return err
+		}
+	}
+
+	AppDebug = debug
+	return nil
 }
 
 func RenderTemplate(response http.ResponseWriter, data any, statusCode int, paths ...string) error {
 	var templates []string
-
 	for _, path := range paths {
-		templates = append(templates, Project.Template(path))
+		templates = append(templates, GetTemplate(path))
 	}
 
 	tmpl, err := template.ParseFiles(templates...)
@@ -61,73 +60,60 @@ func RenderTemplate(response http.ResponseWriter, data any, statusCode int, path
 	}
 
 	response.WriteHeader(statusCode)
-
 	err = tmpl.Execute(response, data)
-
-	clear(Project.Messages)
-	Project.Messages = []Message{}
-
 	return err
 }
 
 func RegisterModel(impl any) error {
-	model, modelName := ModelCreate(impl)
-	if _, ok := Project.Models[modelName]; ok {
-		return fmt.Errorf("'%s' model already exists", modelName)
+	modelName := reflect.TypeOf(impl).Name()
+	if _, has := AppModels[modelName]; has {
+		return fmt.Errorf("model '%v' already exists", modelName)
 	}
 
-	migration := MigrationCreate(model)
-	if _, ok := Project.Migrations[modelName]; ok {
+	model := NewModel(impl)
+	modelMigration := NewMigration(model)
+	if _, ok := AppMigrations[modelName]; ok {
 		return fmt.Errorf("'%s' migration already exists", modelName)
 	}
 
-	Project.Migrations[modelName] = migration
-	Project.Models[modelName] = model
+	AppModels[modelName] = model
+	AppMigrations[modelName] = modelMigration
+
 	return nil
 }
 
 func GetModel(impl any) (Model, error) {
-	implName := reflect.TypeOf(impl).Name()
-	if implModel, ok := Project.Models[implName]; ok {
-		return implModel.CreateFields(impl), nil
+	modelName := reflect.TypeOf(impl).Name()
+	if model, ok := AppModels[modelName]; ok {
+		return model.CreateFields(impl), nil
 	}
-	return Model{}, fmt.Errorf("model with the name of '%v' does not exist", implName)
+	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
 }
 
-var Project = ProjectInformation{}
-
-func (project *ProjectInformation) Setup(directory string, name string, static string, templates string, migrations string) error {
-	project.Name = name
-	project.Directory = directory
-	project.StaticDirectory = fmt.Sprintf("%s/%s", directory, static)
-	project.TemplatesDirectory = fmt.Sprintf("%s/%s", directory, templates)
-	project.MigrationsDirectory = fmt.Sprintf("%s/%s", directory, migrations)
-
-	project.Models = map[string]Model{}
-	project.Migrations = map[string]Migration{}
-	project.Messages = []Message{}
-
-	var err error
-
-	project.DataBase, err = sql.Open("sqlite3", os.Getenv("DATABASE_CONNECTION"))
-	if err != nil {
-		return err
+func GetSource(path string, args ...any) string {
+	if sourcesDirectory, ok := AppDirectories["sources"]; ok {
+		return (sourcesDirectory + "/" + fmt.Sprintf(path, args...))
 	}
-
-	project.Router = mux.NewRouter()
-	project.Router.StrictSlash(true)
-
-	return nil
+	panic(errors.New("sources directory was not specified"))
 }
 
-func (project ProjectInformation) Src(path string, args ...any) string {
-	return project.Directory + "/" + fmt.Sprintf(path, args...)
+func GetResource(path string, args ...any) string {
+	if resourcesDirectory, ok := AppDirectories["resources"]; ok {
+		return (resourcesDirectory + "/" + fmt.Sprintf(path, args...))
+	}
+	panic(errors.New("resources directory was not specified"))
 }
 
-func (project ProjectInformation) Static(path string, args ...any) string {
-	return project.StaticDirectory + "/" + fmt.Sprintf(path, args...)
+func GetMigration(path string, args ...any) string {
+	if migrationDirectory, ok := AppDirectories["migrations"]; ok {
+		return (migrationDirectory + "/" + fmt.Sprintf(path, args...))
+	}
+	panic(errors.New("migrations directory was not specified"))
 }
 
-func (project ProjectInformation) Template(path string, args ...any) string {
-	return project.TemplatesDirectory + "/" + fmt.Sprintf(path, args...)
+func GetTemplate(path string, args ...any) string {
+	if templatesDirectory, ok := AppDirectories["templates"]; ok {
+		return (templatesDirectory + "/" + fmt.Sprintf(path, args...))
+	}
+	panic(errors.New("templates directory was not specified"))
 }

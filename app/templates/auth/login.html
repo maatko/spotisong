@@ -6,7 +6,7 @@
     <h1 class="text-center mt-5 md:mt-0 text-3xl font-bold">Log in to SpotiSong</h1>
     <hr class="h-px my-8 bg-gray-700 w-3/4 m-auto border-0 dark:bg-gray-700">
     
-    <form action="/login" method="POST">
+    <form action="/auth/login" method="POST">
         <div class="w-3/4 m-auto">
             <label for="username" class="block font-bold text-sm">Username</label>
             <input type="text" name="username" id="username" placeholder="Username" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
@@ -30,6 +30,6 @@
     </div>
 
     <div class="w-full text-center mt-2 lg:mt-5">
-        Don't have an account? <a href="/register" class="underline">Sign up for SpotiSong</a>
+        Don't have an account? <a href="/auth/register" class="underline">Sign up for SpotiSong</a>
     </div>
 {{ end }}
