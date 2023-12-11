@@ -7,6 +7,9 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 )
 
 var AppName string
@@ -17,6 +20,10 @@ var AppDebug bool
 // migrations are automatically created with the model
 var AppModels map[string]Model = map[string]Model{}
 var AppMigrations map[string]Migration = map[string]Migration{}
+
+// Used for managing cookies with the between
+// the client and the server
+var AppCookieStore *sessions.CookieStore
 
 // Stores paths to all directories
 // that might need to be queried runtime
@@ -42,6 +49,8 @@ func InitializeApp(registerModels func() ModelImplementations) error {
 			return err
 		}
 	}
+
+	AppCookieStore = sessions.NewCookieStore(securecookie.GenerateRandomKey(256))
 
 	AppDebug = debug
 	return nil
