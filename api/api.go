@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 	"text/template"
 )
@@ -62,32 +61,6 @@ func RenderTemplate(response http.ResponseWriter, data any, statusCode int, path
 	response.WriteHeader(statusCode)
 	err = tmpl.Execute(response, data)
 	return err
-}
-
-func RegisterModel(impl any) error {
-	modelName := reflect.TypeOf(impl).Name()
-	if _, has := AppModels[modelName]; has {
-		return fmt.Errorf("model '%v' already exists", modelName)
-	}
-
-	model := NewModel(impl)
-	modelMigration := NewMigration(model)
-	if _, ok := AppMigrations[modelName]; ok {
-		return fmt.Errorf("'%s' migration already exists", modelName)
-	}
-
-	AppModels[modelName] = model
-	AppMigrations[modelName] = modelMigration
-
-	return nil
-}
-
-func GetModel(impl any) (Model, error) {
-	modelName := reflect.TypeOf(impl).Name()
-	if model, ok := AppModels[modelName]; ok {
-		return model.CreateFields(impl), nil
-	}
-	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
 }
 
 func GetSource(path string, args ...any) string {

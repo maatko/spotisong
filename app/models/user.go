@@ -34,29 +34,13 @@ func (user *User) FromRequest(request *http.Request) error {
 	return nil
 }
 
-func (user *User) Fetch(keys ...string) error {
+func (user *User) Load(keys ...string) error {
 	model, err := api.GetModel(*user)
 	if err != nil {
 		return err
 	}
 
-	rows, err := model.Fetch(*user, keys...)
-	if err != nil {
-		return err
-	}
-
-	// cause we are only fetching a single user
-	// we can just access the first one in the list
-	rows.Next()
-
-	defer rows.Close()
-	return rows.Scan(
-		&user.ID,
-		&user.Email,
-		&user.Username,
-		&user.Password,
-		&user.CreatedAt,
-	)
+	return model.Fetch(user, keys...)
 }
 
 func (user *User) Save() error {
@@ -71,5 +55,5 @@ func (user *User) Save() error {
 	}
 
 	user.ID = int(id)
-	return user.Fetch("id")
+	return nil
 }

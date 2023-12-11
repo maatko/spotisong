@@ -1,7 +1,7 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -30,17 +30,72 @@ type Model struct {
 	Fields []ModelField
 }
 
+type ModelImpl interface {
+	Load() error
+	Save() error
+}
+
 type ModelImplementations []any
 
 //////////////////////////
 // Model
 //////////////////////////
 
-func NewModel(impl any) Model {
+func NewModel(impl ModelImpl) Model {
 	return Model{
 		ID:   len(AppModels),
 		Name: strings.ToLower(reflect.TypeOf(impl).Name()),
 	}.CreateFields(impl)
+}
+
+func RegisterModel(impl ModelImpl) error {
+	modelName := reflect.TypeOf(impl).Name()
+	if _, has := AppModels[modelName]; has {
+		return fmt.Errorf("model '%v' already exists", modelName)
+	}
+
+	model := NewModel(impl)
+	modelMigration := NewMigration(model)
+	if _, ok := AppMigrations[modelName]; ok {
+		return fmt.Errorf("'%s' migration already exists", modelName)
+	}
+
+	AppModels[modelName] = model
+	AppMigrations[modelName] = modelMigration
+
+	return nil
+}
+
+func GetModel(impl ModelImpl) (Model, error) {
+	modelName := reflect.TypeOf(impl).Name()
+	if model, ok := AppModels[modelName]; ok {
+		return model.CreateFields(impl), nil
+	}
+	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
+}
+
+func FetchModel(impl any, keys ...string) any {
+	model, err := GetModel(impl)
+	if err != nil {
+		return err
+	}
+
+	model.Fetch(&impl, keys...)
+	return impl
+}
+
+func InsertModel(impl any) (any, error) {
+	model, err := GetModel(impl)
+	if err != nil {
+		return impl, err
+	}
+
+	_, err = model.Insert()
+	if err != nil {
+		return impl, err
+	}
+
+	return impl, nil
 }
 
 func (model Model) CreateFields(impl any) Model {
@@ -79,11 +134,77 @@ func (model Model) CreateFields(impl any) Model {
 }
 
 func (model Model) Insert() (int64, error) {
-	var query strings.Builder
-	var values []any
+	sql, values := model.GenerateInsertSQL()
 
+	stmt, err := Server.DataBase.Prepare(sql)
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := stmt.Exec(values...)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.LastInsertId()
+}
+
+func (model Model) Fetch(implPtr any, keys ...string) error {
+	implType := reflect.TypeOf(implPtr)
+	if implType.Kind() != reflect.Ptr {
+		return errors.New("pointer to the models implementation must be passed")
+	}
+
+	implValue := reflect.ValueOf(implPtr).Elem()
+
+	var values []any
+	for _, key := range keys {
+		for _, field := range model.Fields {
+			if field.Name == key {
+				if field.Properties.BelongsTo != nil {
+					primaryField := field.Properties.BelongsTo.GetPrimaryField()
+					values = append(values, primaryField.GetValue())
+				} else {
+					values = append(values, field.GetValue())
+				}
+				break
+			}
+		}
+	}
+
+	var ptrs []any
+	for i := 0; i < implValue.NumField(); i++ {
+		valueField := implValue.Field(i)
+		modelField := model.Fields[i]
+
+		belongsTo := modelField.Properties.BelongsTo
+		if belongsTo != nil {
+			var nothing interface{}
+			ptrs = append(ptrs, &nothing)
+			continue
+		}
+
+		ptrs = append(ptrs, valueField.Addr().Interface())
+	}
+
+	stmt, err := Server.DataBase.Prepare(model.GenerateFetchSQL(keys...))
+	if err != nil {
+		return err
+	}
+
+	row := stmt.QueryRow(values...)
+	if row.Err() != nil {
+		return row.Err()
+	}
+
+	return row.Scan(ptrs...)
+}
+
+func (model Model) GenerateInsertSQL() (string, []any) {
+	var query strings.Builder
 	query.WriteString(fmt.Sprintf("INSERT INTO %v (", model.Name))
 
+	var values []any
 	fieldLen := len(model.Fields)
 	for idx, field := range model.Fields {
 		if field.Properties.PrimaryKey || len(field.Properties.Default) > 0 {
@@ -111,28 +232,11 @@ func (model Model) Insert() (int64, error) {
 	}
 	query.WriteString(")")
 
-	stmt, err := Server.DataBase.Prepare(query.String())
-	if err != nil {
-		return 0, err
-	}
-	defer stmt.Close()
-
-	result, err := stmt.Exec(values...)
-	if err != nil {
-		return 0, err
-	}
-
-	insertedID, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return insertedID, nil
+	return query.String(), values
 }
 
-func (model Model) Fetch(impl any, keys ...string) (*sql.Rows, error) {
+func (model Model) GenerateFetchSQL(keys ...string) string {
 	var query strings.Builder
-
 	query.WriteString(fmt.Sprintf("SELECT * FROM %v WHERE ", model.Name))
 
 	for idx, key := range keys {
@@ -143,28 +247,7 @@ func (model Model) Fetch(impl any, keys ...string) (*sql.Rows, error) {
 		}
 	}
 
-	var values []any
-	for _, key := range keys {
-		for _, field := range model.Fields {
-			if field.Name == key {
-				values = append(values, field.GetValue())
-				break
-			}
-		}
-	}
-
-	stmt, err := Server.DataBase.Prepare(query.String())
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
-	rows, err := stmt.Query(values...)
-	if err != nil {
-		return nil, err
-	}
-
-	return rows, nil
+	return query.String()
 }
 
 func (model Model) GetPrimaryField() *ModelField {
