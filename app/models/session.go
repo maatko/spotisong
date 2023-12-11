@@ -27,5 +27,6 @@ func (session *Session) Save() error {
 		return err
 	}
 
-	return model.Insert()
+	_, err = model.Insert()
+	return err
 }

@@ -28,13 +28,6 @@ func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
 			response.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		err = user.Fetch("username", "password")
-		if err != nil {
-			status = http.StatusUnauthorized
-		} else {
-			status = http.StatusOK
-		}
 	}
 
 	api.RenderTemplate(

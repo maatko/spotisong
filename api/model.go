@@ -30,25 +30,20 @@ type Model struct {
 	Fields []ModelField
 }
 
-type ModelImpl interface {
-	Load() error
-	Save() error
-}
-
 type ModelImplementations []any
 
 //////////////////////////
 // Model
 //////////////////////////
 
-func NewModel(impl ModelImpl) Model {
+func NewModel(impl any) Model {
 	return Model{
 		ID:   len(AppModels),
 		Name: strings.ToLower(reflect.TypeOf(impl).Name()),
 	}.CreateFields(impl)
 }
 
-func RegisterModel(impl ModelImpl) error {
+func RegisterModel(impl any) error {
 	modelName := reflect.TypeOf(impl).Name()
 	if _, has := AppModels[modelName]; has {
 		return fmt.Errorf("model '%v' already exists", modelName)
@@ -66,7 +61,7 @@ func RegisterModel(impl ModelImpl) error {
 	return nil
 }
 
-func GetModel(impl ModelImpl) (Model, error) {
+func GetModel(impl any) (Model, error) {
 	modelName := reflect.TypeOf(impl).Name()
 	if model, ok := AppModels[modelName]; ok {
 		return model.CreateFields(impl), nil
@@ -74,14 +69,13 @@ func GetModel(impl ModelImpl) (Model, error) {
 	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
 }
 
-func FetchModel(impl any, keys ...string) any {
+func FetchModel(impl any, keys ...string) (any, error) {
 	model, err := GetModel(impl)
 	if err != nil {
-		return err
+		return impl, err
 	}
 
-	model.Fetch(&impl, keys...)
-	return impl
+	return impl, model.Fetch(&impl, keys...)
 }
 
 func InsertModel(impl any) (any, error) {
