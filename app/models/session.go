@@ -1,32 +1,21 @@
 package models
 
 import (
-	"spotisong/api"
 	"time"
 )
 
 type Session struct {
-	ID        int       `key:"primary"`
-	User      User      `key:"foreign"`
-	CreatedAt time.Time `default:"CURRENT_TIMESTAMP"`
+	ID        int  `key:"primary"`
+	User      User `key:"foreign"`
+	CreatedAt time.Time
 	ExpiresAt time.Time
 }
 
-func (session *Session) Fetch(keys ...string) error {
-	model, err := api.GetModel(*session)
-	if err != nil {
-		return err
+func NewSession(user User, expiresIn int) Session {
+	currentTime := time.Now().Local()
+	return Session{
+		User:      user,
+		CreatedAt: currentTime,
+		ExpiresAt: currentTime.Add(time.Second * time.Duration(expiresIn)),
 	}
-
-	return model.Fetch(session, keys...)
-}
-
-func (session *Session) Save() error {
-	model, err := api.GetModel(*session)
-	if err != nil {
-		return err
-	}
-
-	_, err = model.Insert()
-	return err
 }

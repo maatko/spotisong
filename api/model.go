@@ -69,13 +69,22 @@ func GetModel(impl any) (Model, error) {
 	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
 }
 
-func FetchModel(impl any, keys ...string) (any, error) {
-	model, err := GetModel(impl)
+func FetchModel(implPtr any, keys ...string) (any, error) {
+	model, err := GetModel(reflect.ValueOf(implPtr).Elem().Interface())
 	if err != nil {
-		return impl, err
+		return implPtr, err
 	}
 
-	return impl, model.Fetch(&impl, keys...)
+	return implPtr, model.Fetch(implPtr, keys...)
+}
+
+func SaveModel(impl any) (int64, error) {
+	model, err := GetModel(impl)
+	if err != nil {
+		return 0, err
+	}
+
+	return model.Insert()
 }
 
 func InsertModel(impl any) (any, error) {

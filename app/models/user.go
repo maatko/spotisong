@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"net/http"
-	"spotisong/api"
 	"time"
 )
 
@@ -13,6 +12,13 @@ type User struct {
 	Username  string    `max_length:"255"`
 	Password  string    `max_length:"1024"`
 	CreatedAt time.Time `default:"CURRENT_TIMESTAMP"`
+}
+
+func NewUser(username string, password string) User {
+	return User{
+		Username: username,
+		Password: password,
+	}
 }
 
 func (user *User) FromRequest(request *http.Request) error {
@@ -31,29 +37,5 @@ func (user *User) FromRequest(request *http.Request) error {
 	user.Username = request.Form.Get("username")
 	user.Password = request.Form.Get("password")
 
-	return nil
-}
-
-func (user *User) Load(keys ...string) error {
-	model, err := api.GetModel(*user)
-	if err != nil {
-		return err
-	}
-
-	return model.Fetch(user, keys...)
-}
-
-func (user *User) Save() error {
-	model, err := api.GetModel(*user)
-	if err != nil {
-		return err
-	}
-
-	id, err := model.Insert()
-	if err != nil {
-		return err
-	}
-
-	user.ID = int(id)
 	return nil
 }
