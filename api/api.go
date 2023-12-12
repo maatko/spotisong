@@ -12,6 +12,11 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+type Message struct {
+	Error bool
+	Text  string
+}
+
 var AppName string
 var AppVersion string
 var AppDebug bool
@@ -20,6 +25,10 @@ var AppDebug bool
 // migrations are automatically created with the model
 var AppModels map[string]Model = map[string]Model{}
 var AppMigrations map[string]Migration = map[string]Migration{}
+
+// Used for displaying messages in templates
+// through routes by calling api.Message()
+var AppMessages []Message = []Message{}
 
 // Used for managing cookies with the between
 // the client and the server
@@ -70,7 +79,38 @@ func RenderRoute(response http.ResponseWriter, route string, page string, data a
 		return err
 	}
 
-	return tmpl.Execute(response, data)
+	err = tmpl.Execute(response, map[string]any{
+		"messages": AppMessages,
+		"data":     data,
+	})
+
+	// make sure to clear all the messages
+	// that needed to be rendered in the current route
+	AppMessages = nil
+
+	return err
+}
+
+func MessageError(text string) {
+	if AppMessages == nil {
+		AppMessages = []Message{}
+	}
+
+	AppMessages = append(AppMessages, Message{
+		Error: true,
+		Text:  text,
+	})
+}
+
+func MessageInfo(text string) {
+	if AppMessages == nil {
+		AppMessages = []Message{}
+	}
+
+	AppMessages = append(AppMessages, Message{
+		Error: false,
+		Text:  text,
+	})
 }
 
 func GetSource(path string, args ...any) string {

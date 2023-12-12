@@ -16,6 +16,9 @@ func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
 
 	if request.Method == "POST" {
 		fmt.Println("Login / POST")
+
+		api.MessageInfo("Testing `info` messages")
+		api.MessageError("Testing `error` messages")
 	}
 
 	api.RenderRoute(response, "auth", "login.html", auth)
@@ -26,6 +29,9 @@ func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
 
 	if request.Method == "POST" {
 		fmt.Println("Register / POST")
+
+		api.MessageError("Testing `error` messages")
+		api.MessageInfo("Testing `info` messages")
 	}
 
 	api.RenderRoute(response, "auth", "register.html", auth)
