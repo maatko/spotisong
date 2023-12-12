@@ -6,7 +6,7 @@
     <h1 class="text-center mt-5 md:mt-0 text-3xl font-bold">Sign up for SpotiSong</h1>
     <hr class="h-px my-8 bg-gray-700 w-3/4 m-auto border-0 dark:bg-gray-700">
 
-    <form action="/auth/register" method="POST">
+    <form hx-post='/auth/register' hx-target="body">
         <div class="w-3/4 m-auto">
             <label for="email" class="block font-bold text-sm">Email</label>
             <input type="email" name="email" id="email" placeholder="Email" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
@@ -20,7 +20,7 @@
             <input type="password" name="password" id="password" placeholder="Password" class="w-full p-1.5 mt-1 rounded border placeholder:text-gray-400 pl-4 border-gray-500 bg-primary">
         </div>
         <div class="w-3/4 m-auto mt-5">
-            <button type="submit" class="w-full rounded-xl p-3 font-bold text-black bg-green-500">Register</button>
+            <button class="w-full rounded-xl p-3 font-bold text-black bg-green-500">Register</button>
         </div>
     </form>
 

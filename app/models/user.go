@@ -1,8 +1,6 @@
 package models
 
 import (
-	"errors"
-	"net/http"
 	"time"
 )
 
@@ -19,23 +17,4 @@ func NewUser(username string, password string) User {
 		Username: username,
 		Password: password,
 	}
-}
-
-func (user *User) FromRequest(request *http.Request) error {
-	err := request.ParseForm()
-	if err != nil {
-		return err
-	}
-
-	if !request.Form.Has("username") {
-		return errors.New("username was not provided in the request")
-	}
-	if !request.Form.Has("password") {
-		return errors.New("password was not provided in the request")
-	}
-
-	user.Username = request.Form.Get("username")
-	user.Password = request.Form.Get("password")
-
-	return nil
 }

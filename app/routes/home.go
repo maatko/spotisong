@@ -11,7 +11,7 @@ type Home struct {
 }
 
 func (home Home) Index(response http.ResponseWriter, request *http.Request) {
-	api.RenderTemplate(response, home, http.StatusOK, "base.html")
+	api.RenderRoute(response, "home", "index.html", home)
 }
 
 func (home Home) Login(response http.ResponseWriter, request *http.Request) {

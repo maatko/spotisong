@@ -50,26 +50,27 @@ func InitializeApp(registerModels func() ModelImplementations) error {
 		}
 	}
 
-	AppCookieStore = sessions.NewCookieStore(securecookie.GenerateRandomKey(256))
+	AppCookieStore = sessions.NewCookieStore(
+		securecookie.GenerateRandomKey(512), // authentication key
+		securecookie.GenerateRandomKey(256), // encryption key
+	)
 
 	AppDebug = debug
 	return nil
 }
 
-func RenderTemplate(response http.ResponseWriter, data any, statusCode int, paths ...string) error {
-	var templates []string
-	for _, path := range paths {
-		templates = append(templates, GetTemplate(path))
-	}
+func RenderRoute(response http.ResponseWriter, route string, page string, data any) error {
+	tmpl, err := template.ParseFiles(
+		GetTemplate("base.html"),
+		GetTemplate("%s/base.html", route),
+		GetTemplate("%s/%s", route, page),
+	)
 
-	tmpl, err := template.ParseFiles(templates...)
 	if err != nil {
 		return err
 	}
 
-	response.WriteHeader(statusCode)
-	err = tmpl.Execute(response, data)
-	return err
+	return tmpl.Execute(response, data)
 }
 
 func GetSource(path string, args ...any) string {

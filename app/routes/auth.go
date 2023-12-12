@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"spotisong/api"
-	"spotisong/app/models"
 
 	"github.com/gorilla/mux"
 )
@@ -12,51 +11,29 @@ import (
 type Auth struct {
 }
 
-func (auth Auth) Index(response http.ResponseWriter, request *http.Request) {
-	response.WriteHeader(http.StatusOK)
-	response.Write([]byte("Index"))
-}
-
 func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
-	var status int = http.StatusOK
+	// authentication, _ := api.AppCookieStore.Get(request, "authentication")
 
 	if request.Method == "POST" {
-		user := models.User{}
-
-		err := user.FromRequest(request)
-		if err != nil {
-			response.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		fmt.Println("Login / POST")
 	}
 
-	api.RenderTemplate(
-		response,
-		auth,
-		status,
-		"base.html",
-		"auth/base.html",
-		"auth/login.html",
-	)
+	api.RenderRoute(response, "auth", "login.html", auth)
 }
 
 func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
+	// authentication, _ := api.AppCookieStore.Get(request, "authentication")
+
 	if request.Method == "POST" {
 		fmt.Println("Register / POST")
 	}
 
-	api.RenderTemplate(
-		response,
-		auth,
-		http.StatusOK,
-		"base.html",
-		"auth/base.html",
-		"auth/register.html",
-	)
+	api.RenderRoute(response, "auth", "register.html", auth)
 }
 
 func (auth Auth) SetupRoutes(router *mux.Router) {
-	router.HandleFunc("/", auth.Index)
 	router.HandleFunc("/login", auth.Login)
 	router.HandleFunc("/register/", auth.Register)
 }
+
+var Authentication Auth = Auth{}

@@ -16,6 +16,6 @@ func RegisterAppModels() api.ModelImplementations {
 func RegisterAppRoutes() api.HttpRoutes {
 	return api.HttpRoutes{
 		"/":     routes.Home{},
-		"/auth": routes.Auth{},
+		"/auth": routes.Authentication,
 	}
 }
