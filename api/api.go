@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -146,4 +147,12 @@ func GetTemplate(path string, args ...any) string {
 		return (templatesDirectory + "/" + fmt.Sprintf(path, args...))
 	}
 	panic(errors.New("templates directory was not specified"))
+}
+
+func TimeCurrent() time.Time {
+	return time.Now().Local()
+}
+
+func TimeFormat(time time.Time) string {
+	return time.Format("2006-01-02 15:04:05")
 }

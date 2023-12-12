@@ -1,6 +1,7 @@
 package models
 
 import (
+	"spotisong/api"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type Session struct {
 }
 
 func NewSession(user User, expiresIn int) Session {
-	currentTime := time.Now().Local()
+	currentTime := api.TimeCurrent()
 	return Session{
 		User:      user,
 		CreatedAt: currentTime,

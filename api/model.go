@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ModelFieldProperties struct {
@@ -219,7 +220,7 @@ func (model Model) GenerateInsertSQL() (string, []any) {
 
 		values = append(values, field.GetValue())
 
-		if idx < fieldLen-1 {
+		if idx < fieldLen {
 			query.WriteString(", ")
 		}
 	}
@@ -235,6 +236,7 @@ func (model Model) GenerateInsertSQL() (string, []any) {
 	}
 	query.WriteString(")")
 
+	fmt.Println(query.String())
 	return query.String(), values
 }
 
@@ -281,6 +283,12 @@ func (field ModelField) GetValue() any {
 		} else if field.Meta.Type.Kind() == reflect.Bool {
 			return field.Value.Bool()
 		} else {
+			if field.Meta.Type.Kind() == reflect.Struct {
+				if field.Type == "DATETIME" {
+					return TimeFormat(field.Value.Interface().(time.Time))
+				}
+				return field.Value.Interface()
+			}
 			return field.Value.String()
 		}
 	}
