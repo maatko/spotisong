@@ -8,11 +8,13 @@
     <!-- styles -->
     <link rel="stylesheet" href="/resource/css/global.css">
 </head>
-    <body class=" bg-base text-white">
+    <body class="bg-base text-white">
         <!-- main page content -->
-        {{ block "content" . }}
-            p>Page has no content</p>
-        {{ end }}
+        <div class="w-screen h-screen">
+            {{ block "content" . }}
+                <p>Page has no content</p>
+            {{ end }}
+        </div>
 
         <!-- messages content -->
         <div class="fixed left-0 top-0 w-full h-full pointer-events-none">

@@ -1,110 +1,108 @@
 {{ define "content" }}
-    <div class="w-screen h-screen">
-        <div class="p-2 h-full lg:grid lg:gap-5 lg:grid-cols-5">
-            <!-- header -->
-            <div class="lg:col-span-1">
-                <div class="flex lg:flex-col h-16 lg:h-32 items-center lg:items-start justify-center gap-5 rounded-lg box-content bg-foreground">
-                    <a href="/" class="font-bold hover:font-bold ml-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="inline w-6 h-6 m-1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                        </svg>
-                        <span class="ml-2">Home</span>
-                    </a>
-                    <a href="/search" class="hover:font-bold ml-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="inline w-6 h-6 m-1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="ml-2">Search</span>
-                    </a>
+    <div class="p-2 h-full lg:grid lg:gap-5 lg:grid-cols-5">
+        <!-- header -->
+        <div class="lg:col-span-1">
+            <div class="flex lg:flex-col h-16 lg:h-32 items-center lg:items-start justify-center gap-5 rounded-lg box-content bg-foreground">
+                <a href="/" class="font-bold hover:font-bold ml-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="inline w-6 h-6 m-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span class="ml-2">Home</span>
+                </a>
+                <a href="/search" class="hover:font-bold ml-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="inline w-6 h-6 m-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="ml-2">Search</span>
+                </a>
+            </div>
+            <!-- leaderboard -->
+            <div class="h-[calc(100%_-_8.75rem)] mt-3 rounded-lg items-center justify-center box-content bg-foreground">
+                <div class="flex items-center justify-center p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" class="inline w-8 h-8 m-1">
+                        <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19H9V8.6a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v5.9zm0-14H9m11.4 14H15v-3.9a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v3.3a.6.6 0 0 1-.6.6M9 19v-5.9a.6.6 0 0 0-.6-.6H3.6a.6.6 0 0 0-.6.6v5.3a.6.6 0 0 0 .6.6z"/>
+                    </svg>
+                    <span class="font-bold">Leaderboard</span>
                 </div>
-                <!-- leaderboard -->
-                <div class="h-[calc(100%_-_8.75rem)] mt-3 rounded-lg items-center justify-center box-content bg-foreground">
-                    <div class="flex items-center justify-center p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" class="inline w-8 h-8 m-1">
-                            <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19H9V8.6a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v5.9zm0-14H9m11.4 14H15v-3.9a.6.6 0 0 1 .6-.6h4.8a.6.6 0 0 1 .6.6v3.3a.6.6 0 0 1-.6.6M9 19v-5.9a.6.6 0 0 0-.6-.6H3.6a.6.6 0 0 0-.6.6v5.3a.6.6 0 0 0 .6.6z"/>
-                        </svg>
-                        <span class="font-bold">Leaderboard</span>
+                <div>
+                    <div class="grid grid-cols-4 w-full m-auto text-center p-2">
+                        <div class="col-span-1 font-bold">#1</div>
+                        <div class="col-span-3">Matthew</div>
                     </div>
-                    <div>
-                        <div class="grid grid-cols-4 w-full m-auto text-center p-2">
-                            <div class="col-span-1 font-bold">#1</div>
-                            <div class="col-span-3">Matthew</div>
-                        </div>
-                        <div class="grid grid-cols-4 w-full m-auto text-center p-2 bg-foreground-dark">
-                            <div class="col-span-1 font-bold">#2</div>
-                            <div class="col-span-3">Perry</div>
-                        </div>
-                        <div class="grid grid-cols-4 w-full m-auto text-center p-2">
-                            <div class="col-span-1 font-bold">#3</div>
-                            <div class="col-span-3">Jerry</div>
-                        </div>
-                        <div class="grid grid-cols-4 w-full m-auto text-center p-2 bg-foreground-dark">
-                            <div class="col-span-1 font-bold">#4</div>
-                            <div class="col-span-3">Anna</div>
-                        </div>
-                        <div class="grid grid-cols-4 w-full m-auto text-center p-2">
-                            <div class="col-span-1 font-bold">#5</div>
-                            <div class="col-span-3">Tommy</div>
-                        </div>
+                    <div class="grid grid-cols-4 w-full m-auto text-center p-2 bg-foreground-dark">
+                        <div class="col-span-1 font-bold">#2</div>
+                        <div class="col-span-3">Perry</div>
+                    </div>
+                    <div class="grid grid-cols-4 w-full m-auto text-center p-2">
+                        <div class="col-span-1 font-bold">#3</div>
+                        <div class="col-span-3">Jerry</div>
+                    </div>
+                    <div class="grid grid-cols-4 w-full m-auto text-center p-2 bg-foreground-dark">
+                        <div class="col-span-1 font-bold">#4</div>
+                        <div class="col-span-3">Anna</div>
+                    </div>
+                    <div class="grid grid-cols-4 w-full m-auto text-center p-2">
+                        <div class="col-span-1 font-bold">#5</div>
+                        <div class="col-span-3">Tommy</div>
                     </div>
                 </div>
             </div>
-            <!-- content -->
-            <div class="lg:col-span-4 mt-3 lg:mt-0 rounded-lg items-center justify-center bg-foreground">
-                <!-- content header -->
-                <div class="flex gap-2 items-center justify-end p-2">
-                    <a href="#" class="bg-base p-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </a>
-                    <a href="#" class="bg-base p-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </a>
-                </div>
-                <div class="pb-2">
-                    <h1 class="text-3xl font-bold ml-5">Play</h1>
-                    <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
-                        <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
-                            <div class="flex items-center justify-center text-3xl bg-foreground w-32 h-32 m-auto rounded-md mb-2">
-                                ?
-                            </div>
-                            <strong class="p-1">Unkonwn</strong>
-                            <small class="block">You still havent gusseed</small>
+        </div>
+        <!-- content -->
+        <div class="lg:col-span-4 mt-3 lg:mt-0 rounded-lg items-center justify-center bg-foreground">
+            <!-- content header -->
+            <div class="flex gap-2 items-center justify-end p-2">
+                <a href="#" class="bg-base p-1 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </a>
+                <a href="#" class="bg-base p-1 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </a>
+            </div>
+            <div class="pb-2">
+                <h1 class="text-3xl font-bold ml-5">Play</h1>
+                <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
+                    <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
+                        <div class="flex items-center justify-center text-3xl bg-foreground w-32 h-32 m-auto rounded-md mb-2">
+                            ?
                         </div>
+                        <strong class="p-1">Unkonwn</strong>
+                        <small class="block">You still havent gusseed</small>
                     </div>
                 </div>
-                <div class="pb-2 mt-3">
-                    <h1 class="text-3xl font-bold ml-5">Your History</h1>
-                    <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
-                        <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
-                            <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
-                            <strong class="p-1">Shoreline Mafia</strong>
-                            <small class="block">Random ass text</small>
-                        </div>
-                        <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
-                            <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
-                            <strong class="p-1">Shoreline Mafia</strong>
-                            <small class="block">Random ass text</small>
-                        </div>
+            </div>
+            <div class="pb-2 mt-3">
+                <h1 class="text-3xl font-bold ml-5">Your History</h1>
+                <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
+                    <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
+                        <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
+                        <strong class="p-1">Shoreline Mafia</strong>
+                        <small class="block">Random ass text</small>
+                    </div>
+                    <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
+                        <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
+                        <strong class="p-1">Shoreline Mafia</strong>
+                        <small class="block">Random ass text</small>
                     </div>
                 </div>
-                <div class="pb-2 mt-5">
-                    <h1 class="text-3xl font-bold ml-5">Fastest Guessed</h1>
-                    <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
-                        <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
-                            <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
-                            <strong class="p-1">Shoreline Mafia</strong>
-                            <small class="block">Random ass text</small>
-                        </div>
-                        <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
-                            <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
-                            <strong class="p-1">Shoreline Mafia</strong>
-                            <small class="block">Random ass text</small>
-                        </div>
+            </div>
+            <div class="pb-2 mt-5">
+                <h1 class="text-3xl font-bold ml-5">Fastest Guessed</h1>
+                <div class="w-fit m-auto lg:m-0 lg:ml-5 pt-2">
+                    <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
+                        <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
+                        <strong class="p-1">Shoreline Mafia</strong>
+                        <small class="block">Random ass text</small>
+                    </div>
+                    <div class="inline-block w-fit mt-2 p-3 rounded-lg bg-foreground-dark text-center">
+                        <img src="https://yt3.googleusercontent.com/ytc/APkrFKZ4EKXfzmv7e3Uv_3dGm6Z_ZpcINhgRtuuIBzg9TQ=s900-c-k-c0x00ffffff-no-rj" alt="shoreline-mafia" class="w-32 m-auto rounded-md mb-2">
+                        <strong class="p-1">Shoreline Mafia</strong>
+                        <small class="block">Random ass text</small>
                     </div>
                 </div>
             </div>
