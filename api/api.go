@@ -69,12 +69,19 @@ func InitializeApp(registerModels func() ModelImplementations) error {
 }
 
 func RenderRoute(response http.ResponseWriter, route string, page string, data any) error {
-	tmpl, err := template.ParseFiles(
-		GetTemplate("base.html"),
-		GetTemplate("%s/base.html", route),
-		GetTemplate("%s/%s", route, page),
-	)
+	baseFile := GetTemplate("%s/base.html", route)
 
+	templates := []string{
+		GetTemplate("base.html"),
+		GetTemplate("%s/%s", route, page),
+	}
+
+	_, err := os.Stat(baseFile)
+	if !os.IsNotExist(err) {
+		templates = append(templates, GetTemplate("%s/base.html", route))
+	}
+
+	tmpl, err := template.ParseFiles(templates...)
 	if err != nil {
 		return err
 	}
