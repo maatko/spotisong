@@ -92,6 +92,13 @@ func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
 			return
 		}
 
+		err = user.Load("username")
+		if err == nil || user.ID != 0 {
+			api.MessageError("User already exists!")
+			RenderRoute(response, request, "auth", "register.html", auth)
+			return
+		}
+
 		err = user.Save()
 		if err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
