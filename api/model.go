@@ -88,6 +88,15 @@ func SaveModel(impl any) (int64, error) {
 	return model.Insert()
 }
 
+func DeleteModel(impl any) error {
+	model, err := GetModel(impl)
+	if err != nil {
+		return err
+	}
+
+	return model.Delete()
+}
+
 func (model Model) CreateFields(impl any) Model {
 	implType := reflect.TypeOf(impl)
 	implValue := reflect.ValueOf(impl)
@@ -137,6 +146,22 @@ func (model Model) Insert() (int64, error) {
 	}
 
 	return result.LastInsertId()
+}
+
+func (model Model) Delete() error {
+	sql, field := model.GenerateDeleteSQL()
+
+	stmt, err := Server.DataBase.Prepare(sql)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(field.GetValue())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (model Model) Fetch(implPtr any, keys ...string) error {
@@ -242,6 +267,20 @@ func (model Model) GenerateFetchSQL(keys ...string) string {
 	}
 
 	return query.String()
+}
+
+func (model Model) GenerateDeleteSQL() (string, *ModelField) {
+	var query strings.Builder
+	query.WriteString(fmt.Sprintf("DELETE FROM %v WHERE ", model.Name))
+
+	for _, field := range model.Fields {
+		if field.Properties.PrimaryKey {
+			query.WriteString(fmt.Sprintf("%v = ?", field.Name))
+			return query.String(), &field
+		}
+	}
+
+	return "", nil
 }
 
 func (model Model) GetPrimaryField() *ModelField {

@@ -97,3 +97,22 @@ func (session *Session) Save() error {
 	session.ID = int(id)
 	return nil
 }
+
+func (session *Session) Delete(request *http.Request, response http.ResponseWriter) error {
+	if request != nil && response != nil {
+		cookie, err := api.AppCookieStore.Get(request, AppSessionCookie)
+		if err != nil {
+			return err
+		}
+
+		cookie.Values[AppSessionCookie] = nil
+
+		err = cookie.Save(request, response)
+		if err != nil {
+			session = nil
+			return err
+		}
+	}
+
+	return api.DeleteModel(*session)
+}

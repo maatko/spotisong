@@ -61,7 +61,20 @@ func (auth Auth) Login(response http.ResponseWriter, request *http.Request) {
 }
 
 func (auth Auth) Logout(response http.ResponseWriter, request *http.Request) {
-	// todo :: log out of the current session
+	session, err := models.GetCookieSession(request)
+	if err != nil {
+		http.Redirect(response, request, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	err = session.Delete(request, response)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	api.MessageInfo("You have logged out!")
+	http.Redirect(response, request, "/", http.StatusTemporaryRedirect)
 }
 
 func (auth Auth) Register(response http.ResponseWriter, request *http.Request) {
