@@ -3,10 +3,9 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
-	"text/template"
+	"strings"
 	"time"
 
 	"github.com/gorilla/securecookie"
@@ -60,43 +59,51 @@ func InitializeApp(registerModels func() ModelImplementations) error {
 		}
 	}
 
-	AppCookieStore = sessions.NewCookieStore(
-		securecookie.GenerateRandomKey(512), // authentication key
-		securecookie.GenerateRandomKey(256), // encryption key
-	)
-
-	AppDebug = debug
-	return nil
-}
-
-func RenderRoute(response http.ResponseWriter, route string, page string, data any) error {
-	baseFile := GetTemplate("%s/base.html", route)
-
-	templates := []string{
-		GetTemplate("base.html"),
-		GetTemplate("%s/%s", route, page),
+	auth_key, err := strconv.Atoi(os.Getenv("APP_AUTHENTICATION_KEY_LEN"))
+	if err != nil {
+		return errors.New("authentication key length must be a valid number")
 	}
 
-	_, err := os.Stat(baseFile)
-	if !os.IsNotExist(err) {
-		templates = append(templates, GetTemplate("%s/base.html", route))
+	enc_key, err := strconv.Atoi(os.Getenv("APP_ENCRYPTION_KEY_LEN"))
+	if err != nil {
+		return errors.New("encprytion key length must a valid number")
 	}
 
-	tmpl, err := template.ParseFiles(templates...)
+	_, err = os.Open("./cookiestore.keys")
+
+	var authKey, encKey string
+	if os.IsNotExist(err) {
+		authKey = string(securecookie.GenerateRandomKey(auth_key))
+		encKey = string(securecookie.GenerateRandomKey(enc_key))
+
+		os.WriteFile("cookiestore.keys", []byte(authKey+":;;::;;:"+encKey), 0755)
+	}
+
+	bytes, err := os.ReadFile("cookiestore.keys")
 	if err != nil {
 		return err
 	}
 
-	err = tmpl.Execute(response, map[string]any{
-		"messages": AppMessages,
-		"data":     data,
-	})
+	array := strings.Split(string(bytes), ":;;::;;:")
 
-	// make sure to clear all the messages
-	// that needed to be rendered in the current route
-	AppMessages = nil
+	AppCookieStore = sessions.NewCookieStore(
+		[]byte(array[0]),
+		[]byte(array[1]),
+	)
 
-	return err
+	maxAge, err := strconv.Atoi(os.Getenv("APP_SESSION_DURATION"))
+	if err != nil {
+		return err
+	}
+
+	AppCookieStore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+	}
+
+	AppDebug = debug
+	return nil
 }
 
 func MessageError(text string) {

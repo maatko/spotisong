@@ -70,13 +70,13 @@ func GetModel(impl any) (Model, error) {
 	return Model{}, fmt.Errorf("model '%v' does not exist", modelName)
 }
 
-func FetchModel(implPtr any, keys ...string) (any, error) {
+func FetchModel(implPtr any, keys ...string) error {
 	model, err := GetModel(reflect.ValueOf(implPtr).Elem().Interface())
 	if err != nil {
-		return implPtr, err
+		return err
 	}
 
-	return implPtr, model.Fetch(implPtr, keys...)
+	return model.Fetch(implPtr, keys...)
 }
 
 func SaveModel(impl any) (int64, error) {
@@ -86,20 +86,6 @@ func SaveModel(impl any) (int64, error) {
 	}
 
 	return model.Insert()
-}
-
-func InsertModel(impl any) (any, error) {
-	model, err := GetModel(impl)
-	if err != nil {
-		return impl, err
-	}
-
-	_, err = model.Insert()
-	if err != nil {
-		return impl, err
-	}
-
-	return impl, nil
 }
 
 func (model Model) CreateFields(impl any) Model {
@@ -210,15 +196,20 @@ func (model Model) GenerateInsertSQL() (string, []any) {
 
 	var values []any
 	fieldLen := len(model.Fields)
-	for idx, field := range model.Fields {
+	for _, field := range model.Fields {
 		if field.Properties.PrimaryKey || len(field.Properties.Default) > 0 {
 			fieldLen--
 			continue
 		}
+		values = append(values, field.GetValue())
+	}
+
+	for idx, field := range model.Fields {
+		if field.Properties.PrimaryKey || len(field.Properties.Default) > 0 {
+			continue
+		}
 
 		query.WriteString(field.Name)
-
-		values = append(values, field.GetValue())
 
 		if idx < fieldLen {
 			query.WriteString(", ")
@@ -235,8 +226,6 @@ func (model Model) GenerateInsertSQL() (string, []any) {
 		}
 	}
 	query.WriteString(")")
-
-	fmt.Println(query.String())
 	return query.String(), values
 }
 

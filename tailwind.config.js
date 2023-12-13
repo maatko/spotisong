@@ -13,9 +13,10 @@ module.exports = {
                 "foreground": "#121212",
                 "base": "#000000",
 
-                "primary": "#4b7bec",
-                "primary-dark": "#375bad",
-                "secondary": "#778ca3",
+                "primary": "#ff6b81",
+                "primary-dark": "#ff4757",
+                "secondary": "#3742fa", 
+                "secondary-dark": "#282fad", 
             },
         },
     },
